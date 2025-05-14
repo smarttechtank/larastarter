@@ -172,10 +172,22 @@ class InstallCommand extends Command
     protected function installSeeders()
     {
         $this->info('Installing seeders...');
-        $this->call('vendor:publish', [
-            '--tag' => 'larastarter-seeders',
-            '--force' => $this->option('force'),
-        ]);
+
+        // Create seeders directory if it doesn't exist
+        (new Filesystem)->ensureDirectoryExists(database_path('seeders'));
+
+        // Directly copy seeder files to ensure they replace existing ones
+        $this->copyFile(
+            __DIR__ . '/../../stubs/database/seeders/DatabaseSeeder.php',
+            database_path('seeders/DatabaseSeeder.php'),
+            $this->option('force')
+        );
+
+        $this->copyFile(
+            __DIR__ . '/../../stubs/database/seeders/RoleSeeder.php',
+            database_path('seeders/RoleSeeder.php'),
+            $this->option('force')
+        );
     }
 
     protected function installRequests()

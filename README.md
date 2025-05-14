@@ -4,7 +4,7 @@ A Laravel package that sets up a starter project with API stack, role-based auth
 
 ## Features
 
-- API starter kit with Sanctum authentication
+- Integrated API starter kit with Sanctum authentication (no need for Laravel Breeze)
 - Cross-Origin Resource Sharing (CORS) configuration
 - Frontend/Backend separation with proper API endpoints
 - Role-based user authentication
@@ -66,7 +66,7 @@ php artisan larastarter:install
 
 This will:
 
-1. Install the API starter kit with Sanctum authentication
+1. Install the API starter kit with Sanctum authentication (previously required Laravel Breeze)
 2. Configure CORS for API access
 3. Set up frontend URL environment variable
 4. Create the necessary migrations for roles and two-factor authentication
