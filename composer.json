@@ -3,7 +3,6 @@
   "description": "A Laravel starter package with role-based authentication, API controllers, and more",
   "type": "library",
   "license": "MIT",
-  "version": "1.0.1",
   "authors": [
     {
       "name": "Smart Tech Tank",
