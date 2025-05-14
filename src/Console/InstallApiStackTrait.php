@@ -44,9 +44,14 @@ trait InstallApiStackTrait
             $this->option('force')
         );
 
+        // Install middleware and aliases
         $this->addMiddlewareToApp([
             '\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class',
         ], 'api');
+
+        $this->addMiddlewareAliasesToApp([
+            'verified' => '\App\Http\Middleware\EnsureEmailIsVerified::class',
+        ]);
 
         // Requests...
         $files->ensureDirectoryExists(app_path('Http/Requests/Auth'));
@@ -62,6 +67,9 @@ trait InstallApiStackTrait
                 $this->option('force')
             );
         }
+
+        // Providers...
+        $this->installProviders();
 
         // Routes...
         $this->copyFile(
@@ -105,8 +113,66 @@ trait InstallApiStackTrait
             }
         }
 
+        // Install tests
+        $this->installApiTests();
+
         // Remove frontend files
         $this->cleanupFrontendFiles();
+    }
+
+    /**
+     * Install API-specific providers.
+     *
+     * @return void
+     */
+    protected function installProviders()
+    {
+        $this->info('Installing providers...');
+
+        // Create directory if it doesn't exist
+        (new Filesystem)->ensureDirectoryExists(app_path('Providers'));
+
+        // Publish AppServiceProvider with password reset URL customization
+        $this->copyFile(
+            __DIR__ . '/../../stubs/api/app/Providers/AppServiceProvider.php',
+            app_path('Providers/AppServiceProvider.php'),
+            $this->option('force')
+        );
+    }
+
+    /**
+     * Install API test files.
+     *
+     * @return void
+     */
+    protected function installApiTests()
+    {
+        $this->info('Installing API test files...');
+        $files = new Filesystem;
+
+        // Create test directories if they don't exist
+        $files->ensureDirectoryExists(base_path('tests/Feature/Auth'));
+
+        // Copy test files
+        $testFiles = [
+            'AuthenticationTest.php',
+            'EmailVerificationTest.php',
+            'PasswordResetTest.php',
+            'RegistrationTest.php',
+        ];
+
+        foreach ($testFiles as $testFile) {
+            $this->copyFile(
+                __DIR__ . '/../../stubs/api/tests/Feature/Auth/' . $testFile,
+                base_path('tests/Feature/Auth/' . $testFile),
+                $this->option('force')
+            );
+        }
+
+        // Delete Password Confirmation test if it exists
+        if ($files->exists(base_path('tests/Feature/Auth/PasswordConfirmationTest.php'))) {
+            $files->delete(base_path('tests/Feature/Auth/PasswordConfirmationTest.php'));
+        }
     }
 
     /**
@@ -213,6 +279,50 @@ trait InstallApiStackTrait
 
                     file_put_contents($appPath, $appContent);
                     $this->info("Added middleware to {$group} group in bootstrap/app.php");
+                });
+        }
+    }
+
+    /**
+     * Add middleware aliases to app.php.
+     *
+     * @param array $aliases
+     * @return void
+     */
+    protected function addMiddlewareAliasesToApp(array $aliases)
+    {
+        $appPath = base_path('bootstrap/app.php');
+
+        if (file_exists($appPath)) {
+            $appContent = file_get_contents($appPath);
+
+            $aliases = collect($aliases)
+                ->filter(fn ($alias, $name) => !str_contains($appContent, "'$name' => $alias"))
+                ->whenNotEmpty(function ($aliasesToAdd) use (&$appContent, $appPath) {
+                    $aliasString = $aliasesToAdd->map(fn ($class, $name) => "'$name' => $class")
+                        ->implode(',' . PHP_EOL . '            ');
+
+                    // Check if aliases section already exists and append to it
+                    if (preg_match('/\$middleware->alias\(\[(.*?)\]\);/s', $appContent)) {
+                        $appContent = preg_replace(
+                            '/(\$middleware->alias\(\[)(.*?)(\s*\]\);)/s',
+                            '$1$2,' . PHP_EOL . '            ' . $aliasString . '$3',
+                            $appContent
+                        );
+                    } else {
+                        // Add new aliases section
+                        $appContent = str_replace(
+                            '->withMiddleware(function (Middleware $middleware) {',
+                            '->withMiddleware(function (Middleware $middleware) {' . PHP_EOL .
+                                '        $middleware->alias([' . PHP_EOL .
+                                '            ' . $aliasString . ',' . PHP_EOL .
+                                '        ]);' . PHP_EOL,
+                            $appContent
+                        );
+                    }
+
+                    file_put_contents($appPath, $appContent);
+                    $this->info('Added middleware aliases to bootstrap/app.php');
                 });
         }
     }
