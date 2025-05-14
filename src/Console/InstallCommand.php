@@ -45,7 +45,7 @@ class InstallCommand extends Command
 
         // Always install API controllers
         $this->installApiControllers();
-        $this->updateApiRoutes();
+        $this->updateRoutes();
 
         // Update base User model
         $this->updateUserModel();
@@ -55,6 +55,9 @@ class InstallCommand extends Command
 
         // Update auth files
         $this->updateAuthFiles();
+
+        // Install email views
+        $this->installEmailViews();
 
         // Update gitignore
         $this->updateGitignore();
@@ -176,6 +179,7 @@ class InstallCommand extends Command
 
         // Create directories if they don't exist
         (new Filesystem)->ensureDirectoryExists(app_path('Http/Requests'));
+        (new Filesystem)->ensureDirectoryExists(app_path('Http/Requests/Auth'));
 
         // Copy request files
         $requests = [
@@ -195,12 +199,20 @@ class InstallCommand extends Command
             );
         }
 
-        // Update LoginRequest
-        $this->copyFile(
-            __DIR__ . '/../../stubs/app/Http/Requests/Auth/LoginRequest.php',
-            app_path('Http/Requests/Auth/LoginRequest.php'),
-            $this->option('force')
-        );
+        // Copy Auth request files
+        $authRequests = [
+            'LoginRequest.php',
+            'TwoFactorVerifyRequest.php',
+            'TwoFactorToggleRequest.php',
+        ];
+
+        foreach ($authRequests as $request) {
+            $this->copyFile(
+                __DIR__ . '/../../stubs/app/Http/Requests/Auth/' . $request,
+                app_path('Http/Requests/Auth/' . $request),
+                $this->option('force')
+            );
+        }
     }
 
     protected function installApiControllers()
@@ -227,6 +239,9 @@ class InstallCommand extends Command
             'EmailVerificationNotificationController.php',
             'RegisteredUserController.php',
             'VerifyEmailController.php',
+            'TwoFactorAuthController.php',
+            'NewPasswordController.php',
+            'PasswordResetLinkController.php',
         ];
 
         foreach ($authControllers as $controller) {
@@ -243,16 +258,36 @@ class InstallCommand extends Command
             __DIR__ . '/../../stubs/app/Notifications/VerifyEmail.php',
             app_path('Notifications/VerifyEmail.php')
         );
+
+        // Copy TwoFactorCode notification
+        $this->copyFile(
+            __DIR__ . '/../../stubs/app/Notifications/TwoFactorCode.php',
+            app_path('Notifications/TwoFactorCode.php')
+        );
     }
 
-    protected function updateApiRoutes()
+    protected function updateRoutes()
     {
-        $this->info('Updating API routes...');
+        $this->info('Updating routes...');
 
         // Update api.php routes file
         $this->copyFile(
             __DIR__ . '/../../stubs/routes/api.php',
             base_path('routes/api.php'),
+            $this->option('force')
+        );
+
+        // Update auth.php routes file
+        $this->copyFile(
+            __DIR__ . '/../../stubs/routes/auth.php',
+            base_path('routes/auth.php'),
+            $this->option('force')
+        );
+
+        // Update web.php routes file
+        $this->copyFile(
+            __DIR__ . '/../../stubs/routes/web.php',
+            base_path('routes/web.php'),
             $this->option('force')
         );
     }
@@ -401,5 +436,16 @@ class InstallCommand extends Command
         copy($from, $to);
 
         $this->line("<info>Copied:</info> {$from} <info>to</info> {$to}");
+    }
+
+    protected function installEmailViews()
+    {
+        $this->info('Installing email views...');
+
+        // Publish views
+        $this->call('vendor:publish', [
+            '--tag' => 'larastarter-views',
+            '--force' => $this->option('force'),
+        ]);
     }
 }

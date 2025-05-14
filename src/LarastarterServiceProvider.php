@@ -50,6 +50,11 @@ class LarastarterServiceProvider extends ServiceProvider
             __DIR__ . '/../stubs/database/seeders/' => database_path('seeders/'),
         ], 'larastarter-seeders');
 
+        // Publish views
+        $this->publishes([
+            __DIR__ . '/../stubs/resources/views/emails/' => resource_path('views/emails/'),
+        ], 'larastarter-views');
+
         // Publish stubs
         $this->publishes([
             __DIR__ . '/../stubs/' => base_path('stubs/larastarter'),
