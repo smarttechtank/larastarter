@@ -9,15 +9,20 @@ use function Laravel\Prompts\select;
 
 class InstallCommand extends Command
 {
+    use InstallApiStackTrait;
+
     protected $signature = 'larastarter:install
                             {--force : Overwrite existing files}
                             {--replace : Internal option to handle file replacement choices}';
 
-    protected $description = 'Install the LaraStarter package components, including roles, repositories, API controllers, and more';
+    protected $description = 'Install the LaraStarter package components, including API stack, roles, repositories, API controllers, and more';
 
     public function handle()
     {
         $this->info('Installing LaraStarter...');
+
+        // First install the API stack
+        $this->installApiStack();
 
         // Install migrations
         $this->publishMigrations();
