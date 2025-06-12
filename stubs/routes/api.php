@@ -60,6 +60,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::match(['put', 'patch'], '/users/update-password', [UserAPIController::class, 'updatePassword'])
         ->name('user.password.update');
 
+    // User avatar
+    Route::match(['put', 'patch'], '/users/upload-avatar', [UserAPIController::class, 'uploadAvatar'])
+        ->name('user.avatar.upload');
+    Route::delete('/users/delete-avatar', [UserAPIController::class, 'deleteAvatar'])
+        ->name('user.avatar.delete');
+
     // User bulk delete
     Route::delete('/users/bulk-delete', [UserAPIController::class, 'bulkDestroy'])
         ->name('users.bulk-delete');

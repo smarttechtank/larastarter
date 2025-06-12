@@ -7,6 +7,8 @@ use App\Models\User;
 use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\UploadedFile;
 
 class UserRepository extends BaseRepository
 {
@@ -156,5 +158,94 @@ class UserRepository extends BaseRepository
         }
 
         return $result;
+    }
+
+    /**
+     * Update user avatar.
+     *
+     * @param int $userId
+     * @param UploadedFile $avatar
+     * @return array
+     */
+    public function updateAvatar(int $userId, UploadedFile $avatar): array
+    {
+        $user = $this->find($userId);
+
+        if (!$user) {
+            return [
+                'success' => false,
+                'message' => 'User not found.',
+                'status' => 404
+            ];
+        }
+
+        try {
+            // Delete old avatar if exists
+            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+
+            // Store new avatar
+            $avatarPath = $avatar->store('avatars', 'public');
+
+            // Update user avatar path
+            $user->avatar = $avatarPath;
+            $user->save();
+
+            return [
+                'success' => true,
+                'message' => 'Avatar updated successfully.',
+                'avatar_url' => Storage::disk('public')->url($avatarPath),
+                'status' => 200
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to upload avatar: ' . $e->getMessage(),
+                'status' => 500
+            ];
+        }
+    }
+
+    /**
+     * Delete user avatar.
+     *
+     * @param int $userId
+     * @return array
+     */
+    public function deleteAvatar(int $userId): array
+    {
+        $user = $this->find($userId);
+
+        if (!$user) {
+            return [
+                'success' => false,
+                'message' => 'User not found.',
+                'status' => 404
+            ];
+        }
+
+        try {
+            // Delete avatar file if exists
+            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+
+            // Remove avatar path from user
+            $user->avatar = null;
+            $user->save();
+
+            return [
+                'success' => true,
+                'message' => 'Avatar deleted successfully.',
+                'status' => 200
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to delete avatar: ' . $e->getMessage(),
+                'status' => 500
+            ];
+        }
     }
 }

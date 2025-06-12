@@ -11,6 +11,8 @@ use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Http\Requests\BulkDestroyUsersRequest;
 use App\Http\Requests\UpdateUserPasswordRequest;
+use App\Http\Requests\UpdateUserAvatarRequest;
+use Illuminate\Http\UploadedFile;
 
 class UserAPIController extends Controller
 {
@@ -233,5 +235,66 @@ class UserAPIController extends Controller
                     : null,
             ]
         ]);
+    }
+
+    /**
+     * Upload or update user avatar.
+     */
+    public function uploadAvatar(UpdateUserAvatarRequest $request): JsonResponse
+    {
+        // Get authenticated user
+        $user = Auth::user();
+
+        // Check if user is authenticated
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not authenticated.',
+            ], 401);
+        }
+
+        // Check if user has permission to update their avatar
+        $this->authorize('update', $user);
+
+        // Upload avatar
+        /** @var UploadedFile $avatarFile */
+        $avatarFile = $request->file('avatar');
+        if (!$avatarFile || !($avatarFile instanceof UploadedFile)) {
+            return response()->json([
+                'message' => 'Avatar file is required.',
+            ], 400);
+        }
+
+        $result = $this->userRepository->updateAvatar($user->id, $avatarFile);
+
+        return response()->json([
+            'message' => $result['message'],
+            'avatar_url' => $result['avatar_url'] ?? null,
+        ], $result['status']);
+    }
+
+    /**
+     * Delete user avatar.
+     */
+    public function deleteAvatar(): JsonResponse
+    {
+        // Get authenticated user
+        $user = Auth::user();
+
+        // Check if user is authenticated
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not authenticated.',
+            ], 401);
+        }
+
+        // Check if user has permission to update their avatar
+        $this->authorize('update', $user);
+
+        // Delete avatar
+        $result = $this->userRepository->deleteAvatar($user->id);
+
+        return response()->json([
+            'message' => $result['message'],
+        ], $result['status']);
     }
 }

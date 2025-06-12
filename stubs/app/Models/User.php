@@ -11,6 +11,8 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -28,6 +30,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'role_id',
         'two_factor_enabled',
+        'avatar',
     ];
 
     /**
@@ -194,6 +197,20 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasRole(string $role): bool
     {
         return $this->role?->name === $role;
+    }
+
+    /**
+     * Get the avatar URL attribute.
+     *
+     * @return Attribute
+     */
+    protected function avatarUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->avatar
+                ? Storage::disk('public')->url($this->avatar)
+                : null,
+        );
     }
 
     /**

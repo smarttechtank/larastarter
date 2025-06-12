@@ -220,6 +220,7 @@ class InstallCommand extends Command
             'UpdateRoleRequest.php',
             'UpdateUserRequest.php',
             'UpdateUserPasswordRequest.php',
+            'UpdateUserAvatarRequest.php',
         ];
 
         foreach ($requests as $request) {
