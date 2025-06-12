@@ -9,6 +9,7 @@ A Laravel package that sets up a starter project with API stack, role-based auth
 - Frontend/Backend separation with proper API endpoints
 - Role-based user authentication
 - Two-factor authentication via email
+- User avatar upload and management system
 - API controllers for users and roles
 - Repository pattern implementation
 - Policy-based authorization
@@ -119,6 +120,11 @@ LaraStarter sets up a complete API authentication system using Laravel Sanctum:
 - `POST /api/reset-password` - Reset the user's password
 - `GET /api/verify-email/{id}/{hash}` - Verify email address
 - `POST /api/email/verification-notification` - Resend verification email
+
+### Avatar Management Routes
+
+- `PUT/PATCH /api/users/upload-avatar` - Upload or update user avatar
+- `DELETE /api/users/delete-avatar` - Delete user avatar
 
 ## Two-Factor Authentication
 
