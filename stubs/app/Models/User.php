@@ -27,6 +27,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'name',
         'email',
+        'phone',
         'password',
         'role_id',
         'two_factor_enabled',
@@ -84,6 +85,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public static array $rules = [
         'name' => 'required|string|max:255',
         'email' => 'required|string|max:255|email|unique:users,email',
+        'phone' => 'nullable|string|max:20|regex:/^[\+]?[0-9\-\(\)\s]+$/',
         'password' => 'required|string|min:8|max:255',
         'role_id' => 'required|exists:roles,id',
     ];
@@ -174,7 +176,8 @@ class User extends Authenticatable implements MustVerifyEmail
             )
             ->when(!empty($filters['search']), function ($query) use ($filters) {
                 $query->where('users.name', 'LIKE', "%{$filters['search']}%")
-                    ->orWhere('users.email', 'LIKE', "%{$filters['search']}%");
+                    ->orWhere('users.email', 'LIKE', "%{$filters['search']}%")
+                    ->orWhere('users.phone', 'LIKE', "%{$filters['search']}%");
             });
     }
 

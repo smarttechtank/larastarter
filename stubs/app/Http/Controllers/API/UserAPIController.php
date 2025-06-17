@@ -111,7 +111,7 @@ class UserAPIController extends Controller
         $this->authorize('update', $user);
 
         // Prepare update data
-        $data = $request->only(['name', 'email', 'role_id']);
+        $data = $request->only(['name', 'email', 'phone', 'role_id']);
 
         // Update user
         $this->userRepository->update($data, $user->id);
@@ -141,7 +141,7 @@ class UserAPIController extends Controller
         $this->authorize('update', $user);
 
         // Prepare update data
-        $data = $request->only(['name', 'email']);
+        $data = $request->only(['name', 'email', 'phone']);
 
         // Update user
         $this->userRepository->update($data, $user->id);
