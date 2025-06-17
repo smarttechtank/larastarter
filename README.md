@@ -10,6 +10,7 @@ A Laravel package that sets up a starter project with API stack, role-based auth
 - Role-based user authentication
 - Two-factor authentication via email
 - User avatar upload and management system
+- User phone number management with international format support
 - API controllers for users and roles
 - Repository pattern implementation
 - Policy-based authorization
@@ -121,10 +122,33 @@ LaraStarter sets up a complete API authentication system using Laravel Sanctum:
 - `GET /api/verify-email/{id}/{hash}` - Verify email address
 - `POST /api/email/verification-notification` - Resend verification email
 
+### User Management Routes
+
+- `PUT/PATCH /api/users/update-profile` - Update user profile (name, email, phone)
+- `PUT/PATCH /api/users/update-password` - Update user password
+
 ### Avatar Management Routes
 
 - `PUT/PATCH /api/users/upload-avatar` - Upload or update user avatar
 - `DELETE /api/users/delete-avatar` - Delete user avatar
+
+## User Profile Management
+
+LaraStarter provides comprehensive user profile management capabilities:
+
+### Phone Number Support
+
+- **International format validation** - Supports various phone number formats
+- **Optional field** - Phone numbers are not required
+- **Search functionality** - Users can be searched by phone number
+- **Validation patterns** - Accepts formats like `+1-234-567-8900`, `(555) 123-4567`, `+44 20 1234 5678`
+
+### Profile Features
+
+- Update name, email, and phone number
+- Email uniqueness validation (excludes current user during updates)
+- Secure password updates with proper authorization
+- Avatar upload and management
 
 ## Two-Factor Authentication
 
