@@ -132,6 +132,8 @@ LaraStarter sets up a complete API authentication system using Laravel Sanctum:
 - `PUT/PATCH /api/users/upload-avatar` - Upload or update user avatar
 - `DELETE /api/users/delete-avatar` - Delete user avatar
 
+**Note:** The `avatar_url` is automatically included in all User JSON responses for easy frontend integration.
+
 ## User Profile Management
 
 LaraStarter provides comprehensive user profile management capabilities:
