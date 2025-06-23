@@ -11,9 +11,11 @@ A Laravel package that sets up a starter project with API stack, role-based auth
 - Two-factor authentication via email
 - User avatar upload and management system
 - User phone number management with international format support
+- Comprehensive user search, filtering, and sorting capabilities
+- Bulk user management operations with proper authorization
 - API controllers for users and roles
 - Repository pattern implementation
-- Policy-based authorization
+- Policy-based authorization with granular permissions
 - Database seeders for roles and users
 - Custom request validation classes
 - Email verification via API
@@ -124,6 +126,17 @@ LaraStarter sets up a complete API authentication system using Laravel Sanctum:
 
 ### User Management Routes
 
+**Admin User Management** (requires appropriate permissions):
+
+- `GET /api/users` - List users with filtering, searching, and pagination
+- `POST /api/users` - Create a new user (sends password reset email)
+- `GET /api/users/{id}` - View a specific user
+- `PUT/PATCH /api/users/{id}` - Update user details (name, email, phone, role)
+- `DELETE /api/users/{id}` - Delete a specific user
+- `POST /api/users/bulk-destroy` - Delete multiple users at once
+
+**Profile Management** (for authenticated users):
+
 - `PUT/PATCH /api/users/update-profile` - Update user profile (name, email, phone)
 - `PUT/PATCH /api/users/update-password` - Update user password
 
@@ -144,6 +157,7 @@ LaraStarter provides comprehensive user profile management capabilities:
 - **Optional field** - Phone numbers are not required
 - **Search functionality** - Users can be searched by phone number
 - **Validation patterns** - Accepts formats like `+1-234-567-8900`, `(555) 123-4567`, `+44 20 1234 5678`
+- **Regex validation** - Uses pattern `/^[\+]?[0-9\-\(\)\s]+$/` for validation
 
 ### Profile Features
 
@@ -151,6 +165,30 @@ LaraStarter provides comprehensive user profile management capabilities:
 - Email uniqueness validation (excludes current user during updates)
 - Secure password updates with proper authorization
 - Avatar upload and management
+- Role-based access control with policy authorization
+
+### User Search and Filtering
+
+LaraStarter provides comprehensive search and filtering capabilities for user management:
+
+- **Text Search** - Search users by name, email, or phone number
+- **Role Filtering** - Filter users by specific roles (supports multiple role IDs)
+- **Sorting Options** - Sort by name, email, role, or creation date (ascending/descending)
+- **Pagination** - Configurable per-page results with query string preservation
+- **Combined Filters** - Use multiple filters simultaneously for precise results
+
+**Supported Sort Options:**
+
+- `name.asc` / `name.desc` - Sort by user name
+- `email.asc` / `email.desc` - Sort by email address
+- `role.asc` / `role.desc` - Sort by role name
+- `created_at.asc` / `created_at.desc` - Sort by registration date
+
+### Bulk Operations
+
+- **Bulk User Deletion** - Delete multiple users at once with proper authorization
+- **Self-deletion Protection** - Prevents users from accidentally deleting themselves
+- **Detailed Response** - Returns count of successful/failed deletions and error details
 
 ## Two-Factor Authentication
 

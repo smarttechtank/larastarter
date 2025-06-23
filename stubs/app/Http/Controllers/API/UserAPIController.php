@@ -36,7 +36,7 @@ class UserAPIController extends Controller
             'per_page',
             'sort',
             'search',
-            'role',
+            'roles',
         ]);
 
         if ($filters) {

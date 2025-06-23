@@ -187,7 +187,11 @@ class User extends Authenticatable implements MustVerifyEmail
                 $query->where('users.name', 'LIKE', "%{$filters['search']}%")
                     ->orWhere('users.email', 'LIKE', "%{$filters['search']}%")
                     ->orWhere('users.phone', 'LIKE', "%{$filters['search']}%");
-            });
+            })
+            ->when(
+                isset($filters['roles']) && $filters['roles'],
+                fn ($query) => $query->whereIn('role_id', array_map('intval', explode(',', $filters['roles'])))
+            );
     }
 
     /**
