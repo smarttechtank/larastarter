@@ -97,6 +97,12 @@ trait InstallApiStackTrait
             $this->option('force')
         );
 
+        $this->copyFile(
+            __DIR__ . '/../../stubs/api/config/sanctum.php',
+            config_path('sanctum.php'),
+            $this->option('force')
+        );
+
         // Environment...
         if (file_exists(base_path('.env'))) {
             $env = file_get_contents(base_path('.env'));
@@ -254,7 +260,7 @@ trait InstallApiStackTrait
             $appContent = file_get_contents($appPath);
 
             $middleware = collect($middleware)
-                ->filter(fn ($mw) => !str_contains($appContent, $mw))
+                ->filter(fn($mw) => !str_contains($appContent, $mw))
                 ->whenNotEmpty(function ($middlewareToAdd) use (&$appContent, $group, $appPath) {
                     $middlewareString = $middlewareToAdd->implode(',' . PHP_EOL . '            ');
 
@@ -297,9 +303,9 @@ trait InstallApiStackTrait
             $appContent = file_get_contents($appPath);
 
             $aliases = collect($aliases)
-                ->filter(fn ($alias, $name) => !str_contains($appContent, "'$name' => $alias"))
+                ->filter(fn($alias, $name) => !str_contains($appContent, "'$name' => $alias"))
                 ->whenNotEmpty(function ($aliasesToAdd) use (&$appContent, $appPath) {
-                    $aliasString = $aliasesToAdd->map(fn ($class, $name) => "'$name' => $class")
+                    $aliasString = $aliasesToAdd->map(fn($class, $name) => "'$name' => $class")
                         ->implode(',' . PHP_EOL . '            ');
 
                     // Check if aliases section already exists and append to it
