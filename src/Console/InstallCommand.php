@@ -30,6 +30,9 @@ class InstallCommand extends Command
         // Publish Sanctum migrations
         $this->publishSanctumMigrations();
 
+        // Publish Sanctum configuration
+        $this->publishSanctumConfig();
+
         // Install factories
         $this->publishFactories();
 
@@ -94,6 +97,16 @@ class InstallCommand extends Command
         $this->call('vendor:publish', [
             '--provider' => 'Laravel\\Sanctum\\SanctumServiceProvider',
             '--tag' => 'sanctum-migrations',
+            '--force' => $this->option('force'),
+        ]);
+    }
+
+    protected function publishSanctumConfig()
+    {
+        $this->info('Publishing Sanctum configuration...');
+        $this->call('vendor:publish', [
+            '--provider' => 'Laravel\\Sanctum\\SanctumServiceProvider',
+            '--tag' => 'sanctum-config',
             '--force' => $this->option('force'),
         ]);
     }
