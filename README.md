@@ -1,4 +1,4 @@
-# LaraStarter Package
+# [LaraStarter Package](https://packagist.org/packages/smarttechtank/larastarter) &middot; [![Author Salimi](https://img.shields.io/badge/Author-Salimi-%3C%3E)](https://github.com/salimi-my)
 
 A Laravel package that sets up a starter project with API stack, role-based authentication, API controllers, repositories, and more.
 
