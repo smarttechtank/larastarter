@@ -51,6 +51,7 @@ class UserRepository extends BaseRepository
      * @param array $inputs Array containing user data with keys:
      *                     - name: string User's name
      *                     - email: string User's email
+     *                     - phone: string User's phone number
      *                     - role_id: int Role ID to assign
      * @return User The newly created user model
      */
@@ -61,6 +62,7 @@ class UserRepository extends BaseRepository
             'name' => $inputs['name'],
             'email' => $inputs['email'],
             'password' => Hash::make(Str::random(8)),
+            'phone' => $inputs['phone'],
             'role_id' => $inputs['role_id'],
         ]);
 
