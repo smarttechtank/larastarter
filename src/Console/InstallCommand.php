@@ -82,6 +82,14 @@ class InstallCommand extends Command
     protected function publishMigrations()
     {
         $this->info('Publishing migrations...');
+
+        // Check if migrations already exist
+        if ($this->migrationsAlreadyExist() && !$this->option('force')) {
+            $this->info('Migrations already exist. Skipping migration publishing...');
+            $this->info('Use --force flag to overwrite existing migrations.');
+            return;
+        }
+
         $this->call('vendor:publish', [
             '--tag' => 'larastarter-migrations',
             '--force' => $this->option('force'),
@@ -91,6 +99,14 @@ class InstallCommand extends Command
     protected function publishSanctumMigrations()
     {
         $this->info('Publishing Sanctum migrations...');
+
+        // Check if Sanctum migrations already exist
+        if ($this->sanctumMigrationsAlreadyExist() && !$this->option('force')) {
+            $this->info('Sanctum migrations already exist. Skipping Sanctum migration publishing...');
+            $this->info('Use --force flag to overwrite existing migrations.');
+            return;
+        }
+
         $this->call('vendor:publish', [
             '--provider' => 'Laravel\\Sanctum\\SanctumServiceProvider',
             '--tag' => 'sanctum-migrations',
@@ -478,5 +494,72 @@ class InstallCommand extends Command
             '--tag' => 'larastarter-views',
             '--force' => $this->option('force'),
         ]);
+    }
+
+    /**
+     * Check if LaraStarter migrations already exist.
+     *
+     * @return bool
+     */
+    protected function migrationsAlreadyExist()
+    {
+        $migrationPatterns = [
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_create_roles_table\.php$/',
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_add_role_id_to_users_table\.php$/',
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_add_two_factor_auth_to_users_table\.php$/',
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_add_avatar_to_users_table\.php$/',
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_add_phone_to_users_table\.php$/',
+        ];
+
+        $migrationsPath = database_path('migrations');
+
+        if (!is_dir($migrationsPath)) {
+            return false;
+        }
+
+        $files = scandir($migrationsPath);
+
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+
+            foreach ($migrationPatterns as $pattern) {
+                if (preg_match($pattern, $file)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if Sanctum migrations already exist.
+     *
+     * @return bool
+     */
+    protected function sanctumMigrationsAlreadyExist()
+    {
+        $migrationsPath = database_path('migrations');
+
+        if (!is_dir($migrationsPath)) {
+            return false;
+        }
+
+        $files = scandir($migrationsPath);
+        $pattern = '/^\d{4}_\d{2}_\d{2}_\d{6}_create_personal_access_tokens_table\.php$/';
+
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+
+            if (preg_match($pattern, $file)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

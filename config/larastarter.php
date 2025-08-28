@@ -1,7 +1,7 @@
 <?php
 
 return [
-  /*
+    /*
     |--------------------------------------------------------------------------
     | Default Role
     |--------------------------------------------------------------------------
@@ -10,9 +10,9 @@ return [
     | when no role is specified.
     |
     */
-  'default_role' => env('DEFAULT_ROLE', 'user'),
+    'default_role' => env('DEFAULT_ROLE', 'user'),
 
-  /*
+    /*
     |--------------------------------------------------------------------------
     | Available Roles
     |--------------------------------------------------------------------------
@@ -22,14 +22,14 @@ return [
     | The 'admin' and 'user' roles are required by the system.
     |
     */
-  'roles' => [
-    'admin' => [
-      'name' => 'admin',
-      'description' => 'Administrator with full access to all features',
+    'roles' => [
+        'admin' => [
+            'name' => 'admin',
+            'description' => 'Administrator with full access to all features',
+        ],
+        'user' => [
+            'name' => 'user',
+            'description' => 'Regular user with limited access',
+        ],
     ],
-    'user' => [
-      'name' => 'user',
-      'description' => 'Regular user with limited access',
-    ],
-  ],
 ];
