@@ -97,7 +97,16 @@ class InstallCommand extends Command
                         'skip' => 'Skip migration publishing',
                         'overwrite' => 'Delete existing and install new migrations'
                     ],
-                    default: 'skip'
+                    default: 'skip',
+                    hint: 'Use arrow keys to navigate',
+                    theme: [
+                        'default' => 'cyan',
+                        'focused' => 'green',
+                        'inactive' => 'gray',
+                        'active' => 'white',
+                        'prompt' => 'cyan',
+                        'border' => 'cyan'
+                    ]
                 );
 
                 if ($choice === 'skip') {
@@ -134,7 +143,16 @@ class InstallCommand extends Command
                         'skip' => 'Skip Sanctum migration publishing',
                         'overwrite' => 'Delete existing and install new Sanctum migrations'
                     ],
-                    default: 'skip'
+                    default: 'skip',
+                    hint: 'Use arrow keys to navigate',
+                    theme: [
+                        'default' => 'cyan',
+                        'focused' => 'green',
+                        'inactive' => 'gray',
+                        'active' => 'white',
+                        'prompt' => 'cyan',
+                        'border' => 'cyan'
+                    ]
                 );
 
                 if ($choice === 'skip') {
@@ -503,7 +521,16 @@ class InstallCommand extends Command
             $this->input->setOption('replace', select(
                 label: "The file {$to} already exists. Do you want to replace it?",
                 options: ['No', 'Yes'],
-                default: 'Yes'
+                default: 'Yes',
+                hint: 'Use arrow keys to navigate',
+                theme: [
+                    'default' => 'cyan',
+                    'focused' => 'green',
+                    'inactive' => 'gray',
+                    'active' => 'white',
+                    'prompt' => 'cyan',
+                    'border' => 'cyan'
+                ]
             ) === 'Yes');
 
             if (!$this->option('replace')) {
