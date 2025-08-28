@@ -84,15 +84,35 @@ class InstallCommand extends Command
         $this->info('Publishing migrations...');
 
         // Check if migrations already exist
-        if ($this->migrationsAlreadyExist() && !$this->option('force')) {
-            $this->info('Migrations already exist. Skipping migration publishing...');
-            $this->info('Use --force flag to overwrite existing migrations.');
-            return;
+        if ($this->migrationsAlreadyExist()) {
+            if ($this->option('force')) {
+                // Force flag is set, delete existing migrations and proceed
+                $this->info('Force flag detected. Removing existing LaraStarter migrations...');
+                $this->deleteExistingMigrations();
+            } else {
+                // Prompt user for action
+                $choice = select(
+                    label: 'LaraStarter migrations already exist. What would you like to do?',
+                    options: [
+                        'skip' => 'Skip migration publishing',
+                        'overwrite' => 'Delete existing and install new migrations'
+                    ],
+                    default: 'skip'
+                );
+
+                if ($choice === 'skip') {
+                    $this->info('Skipping migration publishing.');
+                    return;
+                } else {
+                    $this->info('Removing existing LaraStarter migrations...');
+                    $this->deleteExistingMigrations();
+                }
+            }
         }
 
         $this->call('vendor:publish', [
             '--tag' => 'larastarter-migrations',
-            '--force' => $this->option('force'),
+            '--force' => true, // Always force after cleanup
         ]);
     }
 
@@ -101,16 +121,36 @@ class InstallCommand extends Command
         $this->info('Publishing Sanctum migrations...');
 
         // Check if Sanctum migrations already exist
-        if ($this->sanctumMigrationsAlreadyExist() && !$this->option('force')) {
-            $this->info('Sanctum migrations already exist. Skipping Sanctum migration publishing...');
-            $this->info('Use --force flag to overwrite existing migrations.');
-            return;
+        if ($this->sanctumMigrationsAlreadyExist()) {
+            if ($this->option('force')) {
+                // Force flag is set, delete existing migrations and proceed
+                $this->info('Force flag detected. Removing existing Sanctum migrations...');
+                $this->deleteExistingSanctumMigrations();
+            } else {
+                // Prompt user for action
+                $choice = select(
+                    label: 'Sanctum migrations already exist. What would you like to do?',
+                    options: [
+                        'skip' => 'Skip Sanctum migration publishing',
+                        'overwrite' => 'Delete existing and install new Sanctum migrations'
+                    ],
+                    default: 'skip'
+                );
+
+                if ($choice === 'skip') {
+                    $this->info('Skipping Sanctum migration publishing.');
+                    return;
+                } else {
+                    $this->info('Removing existing Sanctum migrations...');
+                    $this->deleteExistingSanctumMigrations();
+                }
+            }
         }
 
         $this->call('vendor:publish', [
             '--provider' => 'Laravel\\Sanctum\\SanctumServiceProvider',
             '--tag' => 'sanctum-migrations',
-            '--force' => $this->option('force'),
+            '--force' => true, // Always force after cleanup
         ]);
     }
 
@@ -494,6 +534,77 @@ class InstallCommand extends Command
             '--tag' => 'larastarter-views',
             '--force' => $this->option('force'),
         ]);
+    }
+
+    /**
+     * Delete existing LaraStarter migrations.
+     *
+     * @return void
+     */
+    protected function deleteExistingMigrations()
+    {
+        $migrationPatterns = [
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_create_roles_table\.php$/',
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_add_role_id_to_users_table\.php$/',
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_add_two_factor_auth_to_users_table\.php$/',
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_add_avatar_to_users_table\.php$/',
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_add_phone_to_users_table\.php$/',
+        ];
+
+        $migrationsPath = database_path('migrations');
+
+        if (!is_dir($migrationsPath)) {
+            return;
+        }
+
+        $files = scandir($migrationsPath);
+
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+
+            foreach ($migrationPatterns as $pattern) {
+                if (preg_match($pattern, $file)) {
+                    $filePath = $migrationsPath . '/' . $file;
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                        $this->line("<info>Deleted:</info> {$file}");
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Delete existing Sanctum migrations.
+     *
+     * @return void
+     */
+    protected function deleteExistingSanctumMigrations()
+    {
+        $migrationsPath = database_path('migrations');
+
+        if (!is_dir($migrationsPath)) {
+            return;
+        }
+
+        $files = scandir($migrationsPath);
+        $pattern = '/^\d{4}_\d{2}_\d{2}_\d{6}_create_personal_access_tokens_table\.php$/';
+
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+
+            if (preg_match($pattern, $file)) {
+                $filePath = $migrationsPath . '/' . $file;
+                if (file_exists($filePath)) {
+                    unlink($filePath);
+                    $this->line("<info>Deleted:</info> {$file}");
+                }
+            }
+        }
     }
 
     /**
