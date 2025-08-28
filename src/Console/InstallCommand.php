@@ -19,7 +19,7 @@ class InstallCommand extends Command
 
     public function handle()
     {
-        $this->info('Installing LaraStarter...');
+        $this->displayLogo();
 
         // First install the API stack
         $this->installApiStack();
@@ -77,6 +77,21 @@ class InstallCommand extends Command
         $this->info('Remember to run "php artisan migrate" to create the necessary database tables.');
 
         return Command::SUCCESS;
+    }
+
+    protected function displayLogo()
+    {
+        $this->info('');
+        $this->info('<fg=red>   _                      ____  _             _            </>');
+        $this->info('<fg=red>  | |                    / ___|| |           | |           </>');
+        $this->info('<fg=red>  | |     __ _ _ __ __ _ | (___  | |_ __ _ _ __| |_ ___ _ __ </>');
+        $this->info('<fg=red>  | |    / _` | \'__/ _` | \___ \ | __/ _` | \'__| __/ _ \ \'__|</>');
+        $this->info('<fg=red>  | |___| (_| | | | (_| | ____) || || (_| | |  | ||  __/ |   </>');
+        $this->info('<fg=red>  |______\__,_|_|  \__,_||_____/  \__\__,_|_|   \__\___|_|   </>');
+        $this->info('');
+        $this->info('<fg=cyan>                 🚀 Laravel Starter Package 🚀</>');
+        $this->info('<fg=yellow>         Installing LaraStarter components and features...</>');
+        $this->info('');
     }
 
     protected function publishMigrations()
