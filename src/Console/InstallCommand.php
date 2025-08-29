@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 use function Laravel\Prompts\select;
+use function Laravel\Prompts\confirm;
 
 class InstallCommand extends Command
 {
@@ -20,6 +21,24 @@ class InstallCommand extends Command
     public function handle()
     {
         $this->displayLogo();
+
+        // Ask user about file handling preference if not already forced
+        if (!$this->option('force')) {
+            $choice = select(
+                label: 'How would you like to handle existing files?',
+                options: [
+                    'individual' => 'Ask me for each file individually',
+                    'overwrite_all' => 'Overwrite all existing files without asking'
+                ],
+                default: 'individual'
+            );
+
+            // Set force option internally if user chooses to overwrite all
+            if ($choice === 'overwrite_all') {
+                $this->input->setOption('force', true);
+                $this->info('Will overwrite all existing files without prompting.');
+            }
+        }
 
         // First install the API stack
         $this->installApiStack();
@@ -514,11 +533,10 @@ class InstallCommand extends Command
         // Check if file exists and force option is not set
         if (file_exists($to) && !$force && !$this->option('force')) {
             // Using Laravel Prompts directly
-            $this->input->setOption('replace', select(
+            $this->input->setOption('replace', confirm(
                 label: "The file {$to} already exists. Do you want to replace it?",
-                options: ['No', 'Yes'],
-                default: 'Yes'
-            ) === 'Yes');
+                default: true
+            ));
 
             if (!$this->option('replace')) {
                 return;
