@@ -66,8 +66,8 @@ class UserRepository extends BaseRepository
             'role_id' => $inputs['role_id'],
         ]);
 
-        // Trigger Laravel's forgot password system
-        Password::broker()->sendResetLink(['email' => $user->email]);
+        // Trigger Laravel's forgot password system with extended expiration for new users
+        Password::broker('new_users')->sendResetLink(['email' => $user->email]);
 
         return $user;
     }
