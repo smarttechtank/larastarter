@@ -7,12 +7,12 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\Rules;
 use Illuminate\Http\JsonResponse;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\Events\Registered;
 
-class RegisteredUserController extends Controller
+class RegisteredUserController extends AppBaseController
 {
     /**
      * Handle an incoming registration request.
@@ -42,10 +42,11 @@ class RegisteredUserController extends Controller
             // For a new registration, always create a new token
             $token = $user->createToken('auth-token')->plainTextToken;
 
-            return response()->json([
+            $data = [
                 'user' => $user,
                 'token' => $token
-            ]);
+            ];
+            return $this->sendResponse($data, 'Registration successful.');
         }
 
         Auth::login($user);

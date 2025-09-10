@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use Illuminate\Http\JsonResponse;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\AppBaseController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
-class VerifyEmailController extends Controller
+class VerifyEmailController extends AppBaseController
 {
     /**
      * Mark the authenticated user's email address as verified.
@@ -18,7 +18,7 @@ class VerifyEmailController extends Controller
         if ($request->user()->hasVerifiedEmail()) {
             // For token-based clients
             if ($request->hasHeader('X-Request-Token')) {
-                return response()->json(['message' => 'Email already verified'], 200);
+                return $this->sendSuccess('Email already verified');
             }
 
             return redirect()->intended(
@@ -32,7 +32,7 @@ class VerifyEmailController extends Controller
 
         // For token-based clients
         if ($request->hasHeader('X-Request-Token')) {
-            return response()->json(['message' => 'Email verified successfully'], 200);
+            return $this->sendSuccess('Email verified successfully');
         }
 
         return redirect()->intended(

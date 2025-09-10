@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\UserAPIController;
 use App\Http\Controllers\API\RoleAPIController;
@@ -42,9 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // Authenticated routes
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     // User info
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    })->name('api.user');
+    Route::get('/user', [UserAPIController::class, 'getCurrentUser'])->name('api.user');
 
     // Logout
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('api.logout');

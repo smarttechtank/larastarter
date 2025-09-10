@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\AppBaseController;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 
-class NewPasswordController extends Controller
+class NewPasswordController extends AppBaseController
 {
     /**
      * Handle an incoming new password request.
@@ -43,11 +43,23 @@ class NewPasswordController extends Controller
         );
 
         if ($status != Password::PASSWORD_RESET) {
-            throw ValidationException::withMessages([
-                'email' => [__($status)],
-            ]);
+            if ($this->isTokenRequest($request)) {
+                return $this->sendError(__($status));
+            } else {
+                throw ValidationException::withMessages([
+                    'email' => [__($status)],
+                ]);
+            }
         }
 
-        return response()->json(['status' => __($status)]);
+        return $this->sendSuccess(__($status));
+    }
+
+    /**
+     * Check if the request is for token-based authentication.
+     */
+    private function isTokenRequest(Request $request): bool
+    {
+        return $request->hasHeader('X-Request-Token');
     }
 }

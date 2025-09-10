@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\AppBaseController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
-class EmailVerificationNotificationController extends Controller
+class EmailVerificationNotificationController extends AppBaseController
 {
     /**
      * Send a new email verification notification.
@@ -17,7 +17,7 @@ class EmailVerificationNotificationController extends Controller
         if ($request->user()->hasVerifiedEmail()) {
             // For token-based requests
             if ($request->hasHeader('X-Request-Token')) {
-                return response()->json(['message' => 'Email already verified']);
+                return $this->sendSuccess('Email already verified');
             }
 
             return redirect()->intended('/dashboard');
@@ -27,6 +27,6 @@ class EmailVerificationNotificationController extends Controller
         $useApiRoute = $request->hasHeader('X-Request-Token');
         $request->user()->sendEmailVerificationNotification($useApiRoute);
 
-        return response()->json(['status' => 'verification-link-sent']);
+        return $this->sendSuccess('Verification link sent successfully');
     }
 }

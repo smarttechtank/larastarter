@@ -80,6 +80,9 @@ class InstallCommand extends Command
         // Update base Controller
         $this->updateController();
 
+        // Install AppBaseController
+        $this->installAppBaseController();
+
         // Update auth files
         $this->updateAuthFiles();
 
@@ -433,6 +436,17 @@ class InstallCommand extends Command
             __DIR__ . '/../../stubs/app/Http/Controllers/Controller.php',
             app_path('Http/Controllers/Controller.php'),
             $this->option('force')
+        );
+    }
+
+    protected function installAppBaseController()
+    {
+        $this->info('Installing AppBaseController...');
+
+        // Copy AppBaseController.php
+        $this->copyFile(
+            __DIR__ . '/../../stubs/app/Http/Controllers/AppBaseController.php',
+            app_path('Http/Controllers/AppBaseController.php')
         );
     }
 

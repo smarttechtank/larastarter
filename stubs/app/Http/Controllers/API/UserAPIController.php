@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\AppBaseController;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreUserRequest;
@@ -14,7 +14,7 @@ use App\Http\Requests\UpdateUserPasswordRequest;
 use App\Http\Requests\UpdateUserAvatarRequest;
 use Illuminate\Http\UploadedFile;
 
-class UserAPIController extends Controller
+class UserAPIController extends AppBaseController
 {
     private UserRepository $userRepository;
 
@@ -49,7 +49,7 @@ class UserAPIController extends Controller
             $users = $this->userRepository->getAll();
         }
 
-        return response()->json($users);
+        return $this->sendResponse($users, 'Users retrieved successfully');
     }
 
     /**
@@ -62,10 +62,7 @@ class UserAPIController extends Controller
 
         $user = $this->userRepository->createNewUser($request->all());
 
-        return response()->json([
-            'message' => 'User created successfully. A password reset email has been sent. Please advice the user to reset their password.',
-            'user' => $user,
-        ], 201);
+        return $this->sendResponse($user, 'User created successfully. A password reset email has been sent. Please advice the user to reset their password.', 201);
     }
 
     /**
@@ -78,9 +75,7 @@ class UserAPIController extends Controller
 
         // Check if user exists
         if (!$user) {
-            return response()->json([
-                'message' => 'User not found.',
-            ], 404);
+            return $this->sendError('User not found.', 404);
         }
 
         // Check if user has permission to view the user
@@ -89,7 +84,7 @@ class UserAPIController extends Controller
         // Load related data
         $user->load('role');
 
-        return response()->json($user);
+        return $this->sendResponse($user, 'User retrieved successfully');
     }
 
     /**
@@ -102,9 +97,7 @@ class UserAPIController extends Controller
 
         // Check if user exists
         if (!$user) {
-            return response()->json([
-                'message' => 'User not found.',
-            ], 404);
+            return $this->sendError('User not found.', 404);
         }
 
         // Check if user has permission to update the user
@@ -116,10 +109,7 @@ class UserAPIController extends Controller
         // Update user
         $this->userRepository->update($data, $user->id);
 
-        return response()->json([
-            'message' => 'User updated successfully.',
-            'user' => $this->userRepository->find($user->id),
-        ]);
+        return $this->sendResponse($this->userRepository->find($user->id), 'User updated successfully.');
     }
 
     /**
@@ -132,9 +122,7 @@ class UserAPIController extends Controller
 
         // Check if user exists
         if (!$user) {
-            return response()->json([
-                'message' => 'User not found.',
-            ], 404);
+            return $this->sendError('User not found.', 404);
         }
 
         // Check if user has permission to update the user
@@ -146,10 +134,7 @@ class UserAPIController extends Controller
         // Update user
         $this->userRepository->update($data, $user->id);
 
-        return response()->json([
-            'message' => 'User updated successfully.',
-            'user' => $this->userRepository->find($user->id),
-        ]);
+        return $this->sendResponse($this->userRepository->find($user->id), 'User updated successfully.');
     }
 
     /**
@@ -162,9 +147,7 @@ class UserAPIController extends Controller
 
         // Check if user is authenticated
         if (!$user) {
-            return response()->json([
-                'message' => 'User not authenticated.',
-            ], 404);
+            return $this->sendError('User not authenticated.', 401);
         }
 
         // Check if user has permission to update the user
@@ -173,9 +156,7 @@ class UserAPIController extends Controller
         // Update user password
         $this->userRepository->updateUserPassword($user->id, $request->password);
 
-        return response()->json([
-            'message' => 'Password updated successfully.',
-        ]);
+        return $this->sendSuccess('Password updated successfully.');
     }
 
     /**
@@ -190,9 +171,7 @@ class UserAPIController extends Controller
         $userToDelete = $this->userRepository->find($id);
 
         if (!$userToDelete) {
-            return response()->json([
-                'message' => 'User not found.',
-            ], 404);
+            return $this->sendError('User not found.', 404);
         }
 
         // Check if user has permission to delete the user
@@ -202,9 +181,11 @@ class UserAPIController extends Controller
         $result = $this->userRepository->destroyUser((int)$id, $user->id);
 
         // Return appropriate response based on result
-        return response()->json([
-            'message' => $result['message']
-        ], $result['status']);
+        if ($result['success']) {
+            return $this->sendSuccess($result['message']);
+        } else {
+            return $this->sendError($result['message'], $result['status']);
+        }
     }
 
     /**
@@ -224,17 +205,16 @@ class UserAPIController extends Controller
         // Delete multiple users
         $result = $this->userRepository->bulkDestroy($ids, $user->id);
 
-        return response()->json([
-            'message' => $result['deleted'] . ' users deleted successfully',
-            'details' => [
-                'deleted' => $result['deleted'],
-                'failed' => $result['failed'],
-                'total_attempted' => $result['attempted'],
-                'self_delete_attempt' => $result['self_delete_attempt']
-                    ? 'Self-deletion was attempted and skipped'
-                    : null,
-            ]
-        ]);
+        $details = [
+            'deleted' => $result['deleted'],
+            'failed' => $result['failed'],
+            'total_attempted' => $result['attempted'],
+            'self_delete_attempt' => $result['self_delete_attempt']
+                ? 'Self-deletion was attempted and skipped'
+                : null,
+        ];
+
+        return $this->sendResponse($details, $result['deleted'] . ' users deleted successfully');
     }
 
     /**
@@ -247,9 +227,7 @@ class UserAPIController extends Controller
 
         // Check if user is authenticated
         if (!$user) {
-            return response()->json([
-                'message' => 'User not authenticated.',
-            ], 401);
+            return $this->sendError('User not authenticated.', 401);
         }
 
         // Check if user has permission to update their avatar
@@ -259,17 +237,17 @@ class UserAPIController extends Controller
         /** @var UploadedFile $avatarFile */
         $avatarFile = $request->file('avatar');
         if (!$avatarFile || !($avatarFile instanceof UploadedFile)) {
-            return response()->json([
-                'message' => 'Avatar file is required.',
-            ], 400);
+            return $this->sendError('Avatar file is required.', 400);
         }
 
         $result = $this->userRepository->updateAvatar($user->id, $avatarFile);
 
-        return response()->json([
-            'message' => $result['message'],
-            'avatar_url' => $result['avatar_url'] ?? null,
-        ], $result['status']);
+        if ($result['success']) {
+            $data = ['avatar_url' => $result['avatar_url'] ?? null];
+            return $this->sendResponse($data, $result['message']);
+        } else {
+            return $this->sendError($result['message'], $result['status']);
+        }
     }
 
     /**
@@ -282,9 +260,7 @@ class UserAPIController extends Controller
 
         // Check if user is authenticated
         if (!$user) {
-            return response()->json([
-                'message' => 'User not authenticated.',
-            ], 401);
+            return $this->sendError('User not authenticated.', 401);
         }
 
         // Check if user has permission to update their avatar
@@ -293,8 +269,27 @@ class UserAPIController extends Controller
         // Delete avatar
         $result = $this->userRepository->deleteAvatar($user->id);
 
-        return response()->json([
-            'message' => $result['message'],
-        ], $result['status']);
+        if ($result['success']) {
+            return $this->sendSuccess($result['message']);
+        } else {
+            return $this->sendError($result['message'], $result['status']);
+        }
+    }
+
+    /**
+     * Get the current authenticated user.
+     */
+    public function getCurrentUser(): JsonResponse
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return $this->sendError('User not authenticated.', 401);
+        }
+
+        // Load related data
+        $user->load('role');
+
+        return $this->sendResponse($user, 'Current user retrieved successfully');
     }
 }

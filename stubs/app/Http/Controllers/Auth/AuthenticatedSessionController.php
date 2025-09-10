@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
-class AuthenticatedSessionController extends Controller
+class AuthenticatedSessionController extends AppBaseController
 {
     /**
      * Handle an incoming authentication request.
@@ -34,17 +34,18 @@ class AuthenticatedSessionController extends Controller
 
                 // Return response based on request type
                 if ($request->isTokenRequest()) {
-                    return response()->json([
-                        'message' => 'Two-factor authentication code has been sent to your email.',
+                    $data = [
                         'two_factor_auth_required' => true,
                         'email' => $user->email
-                    ], 200);
+                    ];
+                    return $this->sendResponse($data, 'Two-factor authentication code has been sent to your email.');
                 }
 
-                return response()->json([
+                $data = [
                     'two_factor_auth_required' => true,
                     'email' => $user->email
-                ], 200);
+                ];
+                return $this->sendResponse($data, 'Two-factor authentication required.');
             } catch (\Exception $e) {
                 // Re-authenticate the user since we're skipping 2FA due to an error
                 Auth::login($user);
@@ -53,11 +54,11 @@ class AuthenticatedSessionController extends Controller
                     $user->load('role');
                     $token = $user->createToken('auth-token')->plainTextToken;
 
-                    return response()->json([
+                    $data = [
                         'user' => $user,
-                        'token' => $token,
-                        'warning' => 'Two-factor authentication is enabled but the code could not be sent. You have been logged in without 2FA verification.'
-                    ]);
+                        'token' => $token
+                    ];
+                    return $this->sendResponse($data, 'Two-factor authentication is enabled but the code could not be sent. You have been logged in without 2FA verification.');
                 }
 
                 $request->session()->regenerate();
@@ -73,10 +74,11 @@ class AuthenticatedSessionController extends Controller
             // Create a new token for each login
             $token = $user->createToken('auth-token')->plainTextToken;
 
-            return response()->json([
+            $data = [
                 'user' => $user,
                 'token' => $token
-            ]);
+            ];
+            return $this->sendResponse($data, 'Login successful.');
         }
 
         $request->session()->regenerate();
@@ -92,10 +94,7 @@ class AuthenticatedSessionController extends Controller
         // For token-based authentication, revoke the token
         if ($request->hasHeader('X-Request-Token') && $request->user()) {
             $request->user()->currentAccessToken()->delete();
-            return response()->json([
-                'message' => 'Token revoked successfully',
-                'status' => 'success'
-            ]);
+            return $this->sendSuccess('Token revoked successfully');
         }
 
         // For session-based authentication

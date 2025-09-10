@@ -4,13 +4,13 @@ namespace App\Http\Controllers\API;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\AppBaseController;
 use App\Repositories\RoleRepository;
 use App\Http\Requests\StoreRoleRequest;
 use App\Http\Requests\UpdateRoleRequest;
 use App\Http\Requests\BulkDestroyRolesRequest;
 
-class RoleAPIController extends Controller
+class RoleAPIController extends AppBaseController
 {
     private RoleRepository $roleRepository;
 
@@ -44,7 +44,7 @@ class RoleAPIController extends Controller
             $roles = $this->roleRepository->getAll();
         }
 
-        return response()->json($roles);
+        return $this->sendResponse($roles, 'Roles retrieved successfully');
     }
 
     /**
@@ -57,10 +57,7 @@ class RoleAPIController extends Controller
 
         $role = $this->roleRepository->createNewRole($request->all());
 
-        return response()->json([
-            'message' => 'Role created successfully.',
-            'role' => $role,
-        ], 201);
+        return $this->sendResponse($role, 'Role created successfully.', 201);
     }
 
     /**
@@ -73,9 +70,7 @@ class RoleAPIController extends Controller
 
         // Check if role exists
         if (!$role) {
-            return response()->json([
-                'message' => 'Role not found.',
-            ], 404);
+            return $this->sendError('Role not found.', 404);
         }
 
         // Check if user has permission to view the role
@@ -84,7 +79,7 @@ class RoleAPIController extends Controller
         // Load related data
         $role->loadCount('users');
 
-        return response()->json($role);
+        return $this->sendResponse($role, 'Role retrieved successfully');
     }
 
     /**
@@ -97,9 +92,7 @@ class RoleAPIController extends Controller
 
         // Check if role exists
         if (!$role) {
-            return response()->json([
-                'message' => 'Role not found.',
-            ], 404);
+            return $this->sendError('Role not found.', 404);
         }
 
         // Check if user has permission to update the role
@@ -111,10 +104,7 @@ class RoleAPIController extends Controller
         // Update role
         $this->roleRepository->update($data, $role->id);
 
-        return response()->json([
-            'message' => 'Role updated successfully.',
-            'role' => $this->roleRepository->find($role->id),
-        ]);
+        return $this->sendResponse($this->roleRepository->find($role->id), 'Role updated successfully.');
     }
 
     /**
@@ -126,9 +116,7 @@ class RoleAPIController extends Controller
         $roleToDelete = $this->roleRepository->find($id);
 
         if (!$roleToDelete) {
-            return response()->json([
-                'message' => 'Role not found.',
-            ], 404);
+            return $this->sendError('Role not found.', 404);
         }
 
         // Check if user has permission to delete the role
@@ -138,9 +126,11 @@ class RoleAPIController extends Controller
         $result = $this->roleRepository->destroyRole((int)$id);
 
         // Return appropriate response based on result
-        return response()->json([
-            'message' => $result['message']
-        ], $result['status']);
+        if ($result['success']) {
+            return $this->sendSuccess($result['message']);
+        } else {
+            return $this->sendError($result['message'], $result['status']);
+        }
     }
 
     /**
@@ -157,14 +147,13 @@ class RoleAPIController extends Controller
         // Delete multiple roles
         $result = $this->roleRepository->bulkDestroy($ids);
 
-        return response()->json([
-            'message' => $result['deleted'] . ' roles deleted successfully',
-            'details' => [
-                'deleted' => $result['deleted'],
-                'failed' => $result['failed'],
-                'total_attempted' => $result['attempted'],
-                'roles_with_users' => $result['has_users'],
-            ]
-        ]);
+        $details = [
+            'deleted' => $result['deleted'],
+            'failed' => $result['failed'],
+            'total_attempted' => $result['attempted'],
+            'roles_with_users' => $result['has_users'],
+        ];
+
+        return $this->sendResponse($details, $result['deleted'] . ' roles deleted successfully');
     }
 }
