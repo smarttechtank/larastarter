@@ -38,6 +38,16 @@ class Role extends Model
     ];
 
     /**
+     * The validation rules for the model.
+     *
+     * @var array<string, string>
+     */
+    public static array $rules = [
+        'name' => 'required|string|max:255|unique:roles,name',
+        'description' => 'nullable|string|max:1000',
+    ];
+
+    /**
      * Scope a query to filter the roles.
      *
      * @param Builder $query

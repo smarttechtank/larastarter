@@ -86,4 +86,13 @@ class UserPolicy
         // Only admin can force delete users
         return $user->hasRole('admin') && $user->id !== $model->id;
     }
+
+    /**
+     * Determine whether the user can resend password reset link.
+     */
+    public function resendPasswordReset(User $user, User $model): bool
+    {
+        // Only admin can resend password reset links for other users
+        return $user->hasRole('admin');
+    }
 }

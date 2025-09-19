@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -37,6 +38,13 @@ class NewPasswordController extends AppBaseController
                     'password' => Hash::make($request->string('password')),
                     'remember_token' => Str::random(60),
                 ])->save();
+
+                // Mark email as verified if not already verified
+                // Since user proved email access by completing password reset
+                if (!$user->hasVerifiedEmail()) {
+                    $user->markEmailAsVerified();
+                    event(new Verified($user));
+                }
 
                 event(new PasswordReset($user));
             }

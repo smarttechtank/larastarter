@@ -251,4 +251,54 @@ class UserRepository extends BaseRepository
             ];
         }
     }
+
+    /**
+     * Resend password reset link for a user.
+     *
+     * @param int $userId
+     * @return array
+     */
+    public function resendPasswordResetLink(int $userId): array
+    {
+        $user = $this->find($userId);
+
+        if (!$user) {
+            return [
+                'success' => false,
+                'message' => 'User not found.',
+                'status' => 404
+            ];
+        }
+
+        try {
+            // Send password reset link using the new_users broker for extended expiration
+            $status = Password::broker('new_users')->sendResetLink(['email' => $user->email]);
+
+            if ($status === Password::RESET_LINK_SENT) {
+                return [
+                    'success' => true,
+                    'message' => 'Password reset link sent successfully.',
+                    'status' => 200
+                ];
+            } elseif ($status === Password::RESET_THROTTLED) {
+                return [
+                    'success' => false,
+                    'message' => 'Too many password reset attempts. Please wait before trying again.',
+                    'status' => 429
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to send password reset link: ' . __($status),
+                    'status' => 500
+                ];
+            }
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to send password reset link: ' . $e->getMessage(),
+                'status' => 500
+            ];
+        }
+    }
 }

@@ -23,14 +23,14 @@ class UpdateRoleRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('roles')->ignore($this->route('role')),
-            ],
-            'description' => 'nullable|string|max:1000',
+        $rules = Role::$rules;
+        unset($rules['name']);
+        $rules['name'] = [
+            'required',
+            'string',
+            'max:255',
+            Rule::unique('roles')->ignore($this->route('role')),
         ];
+        return $rules;
     }
 }

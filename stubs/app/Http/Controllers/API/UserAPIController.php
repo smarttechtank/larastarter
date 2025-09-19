@@ -12,6 +12,7 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Http\Requests\BulkDestroyUsersRequest;
 use App\Http\Requests\UpdateUserPasswordRequest;
 use App\Http\Requests\UpdateUserAvatarRequest;
+use App\Http\Requests\ResendPasswordResetRequest;
 use Illuminate\Http\UploadedFile;
 
 class UserAPIController extends AppBaseController
@@ -291,5 +292,34 @@ class UserAPIController extends AppBaseController
         $user->load('role');
 
         return $this->sendResponse($user, 'Current user retrieved successfully');
+    }
+
+    /**
+     * Resend password reset link for a specific user (Admin only).
+     */
+    public function resendPasswordReset(ResendPasswordResetRequest $request): JsonResponse
+    {
+        // Get validated data
+        $userId = $request->validated('user_id');
+
+        // Get the user to resend password reset for
+        $user = $this->userRepository->find($userId);
+
+        // Check if user exists
+        if (!$user) {
+            return $this->sendError('User not found.', 404);
+        }
+
+        // Check if the authenticated user has permission to resend password reset
+        $this->authorize('resendPasswordReset', $user);
+
+        // Resend password reset link
+        $result = $this->userRepository->resendPasswordResetLink($userId);
+
+        if ($result['success']) {
+            return $this->sendSuccess($result['message']);
+        } else {
+            return $this->sendError($result['message'], $result['status']);
+        }
     }
 }

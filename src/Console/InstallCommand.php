@@ -307,6 +307,7 @@ class InstallCommand extends Command
         $requests = [
             'BulkDestroyRolesRequest.php',
             'BulkDestroyUsersRequest.php',
+            'ResendPasswordResetRequest.php',
             'StoreRoleRequest.php',
             'StoreUserRequest.php',
             'UpdateRoleRequest.php',
