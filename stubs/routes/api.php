@@ -67,6 +67,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::delete('/users/bulk-delete', [UserAPIController::class, 'bulkDestroy'])
         ->name('users.bulk-delete');
 
+    // User resend password reset
+    Route::post('/users/resend-password-reset', [UserAPIController::class, 'resendPasswordReset'])
+        ->name('users.resend-password-reset');
+
     // User API resource
     Route::apiResource('/users', UserAPIController::class);
 
