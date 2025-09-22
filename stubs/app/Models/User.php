@@ -5,6 +5,7 @@ namespace App\Models;
 use Laravel\Sanctum\HasApiTokens;
 use App\Notifications\VerifyEmail;
 use App\Notifications\TwoFactorCode;
+use App\Notifications\ExtendedPasswordReset;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -248,5 +249,16 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sendEmailVerificationNotification($useApiRoute = false)
     {
         $this->notify(new VerifyEmail($useApiRoute));
+    }
+
+    /**
+     * Send a password reset notification with extended expiration time.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendExtendedPasswordResetNotification($token)
+    {
+        $this->notify(new ExtendedPasswordReset($token));
     }
 }

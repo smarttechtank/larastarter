@@ -6,8 +6,8 @@ use Str;
 use App\Models\User;
 use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\UploadedFile;
 
 class UserRepository extends BaseRepository
@@ -66,8 +66,9 @@ class UserRepository extends BaseRepository
             'role_id' => $inputs['role_id'],
         ]);
 
-        // Trigger Laravel's forgot password system with extended expiration for new users
-        Password::broker('new_users')->sendResetLink(['email' => $user->email]);
+        // Send password reset notification with extended expiration for new users
+        // Note: No throttling check for new user creation as this is the first password reset request
+        $this->sendExtendedPasswordReset($user);
 
         return $user;
     }
@@ -271,28 +272,23 @@ class UserRepository extends BaseRepository
         }
 
         try {
-            // Send password reset link using the new_users broker for extended expiration
-            $status = Password::broker('new_users')->sendResetLink(['email' => $user->email]);
-
-            if ($status === Password::RESET_LINK_SENT) {
-                return [
-                    'success' => true,
-                    'message' => 'Password reset link sent successfully.',
-                    'status' => 200
-                ];
-            } elseif ($status === Password::RESET_THROTTLED) {
+            // Check for throttling before sending
+            if ($this->isPasswordResetThrottled($user->email)) {
                 return [
                     'success' => false,
                     'message' => 'Too many password reset attempts. Please wait before trying again.',
                     'status' => 429
                 ];
-            } else {
-                return [
-                    'success' => false,
-                    'message' => 'Failed to send password reset link: ' . __($status),
-                    'status' => 500
-                ];
             }
+
+            // Send password reset notification with extended expiration
+            $this->sendExtendedPasswordReset($user);
+
+            return [
+                'success' => true,
+                'message' => 'Password reset link sent successfully.',
+                'status' => 200
+            ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
@@ -300,5 +296,48 @@ class UserRepository extends BaseRepository
                 'status' => 500
             ];
         }
+    }
+
+    /**
+     * Send a password reset notification with extended expiration.
+     *
+     * @param User $user
+     * @return void
+     */
+    private function sendExtendedPasswordReset(User $user): void
+    {
+        // Generate a secure random token
+        $token = Str::random(60);
+
+        // Store the token in the default password_reset_tokens table
+        DB::table(config('auth.passwords.users.table'))->updateOrInsert(
+            ['email' => $user->email],
+            [
+                'email' => $user->email,
+                'token' => Hash::make($token),
+                'created_at' => now(),
+            ]
+        );
+
+        // Send the custom notification with extended expiration message
+        $user->sendExtendedPasswordResetNotification($token);
+    }
+
+    /**
+     * Check if password reset is throttled for the given email.
+     *
+     * @param string $email
+     * @return bool
+     */
+    private function isPasswordResetThrottled(string $email): bool
+    {
+        $throttleMinutes = config('auth.passwords.users.throttle', 60);
+
+        $recentToken = DB::table(config('auth.passwords.users.table'))
+            ->where('email', $email)
+            ->where('created_at', '>', now()->subSeconds($throttleMinutes))
+            ->first();
+
+        return $recentToken !== null;
     }
 }

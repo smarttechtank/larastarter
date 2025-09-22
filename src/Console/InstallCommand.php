@@ -388,6 +388,12 @@ class InstallCommand extends Command
             __DIR__ . '/../../stubs/app/Notifications/TwoFactorCode.php',
             app_path('Notifications/TwoFactorCode.php')
         );
+
+        // Copy ExtendedPasswordReset notification
+        $this->copyFile(
+            __DIR__ . '/../../stubs/app/Notifications/ExtendedPasswordReset.php',
+            app_path('Notifications/ExtendedPasswordReset.php')
+        );
     }
 
     protected function updateRoutes()
