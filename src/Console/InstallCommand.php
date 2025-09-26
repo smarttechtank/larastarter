@@ -89,6 +89,9 @@ class InstallCommand extends Command
         // Install email views
         $this->installEmailViews();
 
+        // Clean up obsolete files from previous versions
+        $this->cleanupObsoleteFiles();
+
         // Update gitignore
         $this->updateGitignore();
 
@@ -327,7 +330,7 @@ class InstallCommand extends Command
         $authRequests = [
             'LoginRequest.php',
             'TwoFactorVerifyRequest.php',
-            'TwoFactorToggleRequest.php',
+            'TwoFactorSetupRequest.php',
         ];
 
         foreach ($authRequests as $request) {
@@ -383,11 +386,6 @@ class InstallCommand extends Command
             app_path('Notifications/VerifyEmail.php')
         );
 
-        // Copy TwoFactorCode notification
-        $this->copyFile(
-            __DIR__ . '/../../stubs/app/Notifications/TwoFactorCode.php',
-            app_path('Notifications/TwoFactorCode.php')
-        );
 
         // Copy ExtendedPasswordReset notification
         $this->copyFile(
@@ -503,6 +501,22 @@ class InstallCommand extends Command
             if (!isset($composerJson['require-dev']['barryvdh/laravel-ide-helper'])) {
                 $this->info('Adding Laravel IDE Helper to composer.json');
                 $composerJson['require-dev']['barryvdh/laravel-ide-helper'] = '^3.5';
+            }
+
+            // Add Google 2FA packages to require if they don't exist
+            if (!isset($composerJson['require']['bacon/bacon-qr-code'])) {
+                $this->info('Adding bacon/bacon-qr-code to composer.json');
+                $composerJson['require']['bacon/bacon-qr-code'] = '^3.0';
+            }
+
+            if (!isset($composerJson['require']['pragmarx/google2fa-laravel'])) {
+                $this->info('Adding pragmarx/google2fa-laravel to composer.json');
+                $composerJson['require']['pragmarx/google2fa-laravel'] = '^4.0';
+            }
+
+            if (!isset($composerJson['require']['pragmarx/recovery'])) {
+                $this->info('Adding pragmarx/recovery to composer.json');
+                $composerJson['require']['pragmarx/recovery'] = '^3.0';
             }
 
             // Add IDE helper commands to post-update-cmd if not already added
@@ -725,5 +739,38 @@ class InstallCommand extends Command
         }
 
         return false;
+    }
+
+    /**
+     * Clean up obsolete files from previous versions.
+     *
+     * @return void
+     */
+    protected function cleanupObsoleteFiles()
+    {
+        $this->info('Cleaning up obsolete files from previous versions...');
+
+        $obsoleteFiles = [
+            // Remove obsolete email-based 2FA files
+            app_path('Http/Requests/Auth/TwoFactorToggleRequest.php'),
+            app_path('Notifications/TwoFactorCode.php'),
+            resource_path('views/emails/auth/two-factor-code.blade.php'),
+        ];
+
+        $filesRemoved = 0;
+
+        foreach ($obsoleteFiles as $file) {
+            if (file_exists($file)) {
+                unlink($file);
+                $this->line("<info>Removed obsolete file:</info> " . str_replace(base_path() . '/', '', $file));
+                $filesRemoved++;
+            }
+        }
+
+        if ($filesRemoved === 0) {
+            $this->line('<comment>No obsolete files found to remove.</comment>');
+        } else {
+            $this->info("Removed {$filesRemoved} obsolete file(s).");
+        }
     }
 }

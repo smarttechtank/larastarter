@@ -4,7 +4,7 @@ namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class TwoFactorToggleRequest extends FormRequest
+class TwoFactorSetupRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,7 +22,19 @@ class TwoFactorToggleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'enabled' => 'required|boolean',
+            'code' => 'required|string|size:6|regex:/^[0-9]{6}$/',
+        ];
+    }
+
+    /**
+     * Get custom error messages for validation rules.
+     */
+    public function messages(): array
+    {
+        return [
+            'code.required' => 'The Google 2FA code is required.',
+            'code.size' => 'The Google 2FA code must be exactly 6 digits.',
+            'code.regex' => 'The Google 2FA code must contain only numbers.',
         ];
     }
 }

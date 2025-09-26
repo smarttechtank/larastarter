@@ -42,6 +42,22 @@ Route::post('/two-factor/verify', [TwoFactorAuthController::class, 'verify'])
     ->middleware('guest')
     ->name('two-factor.verify');
 
-Route::post('/two-factor/toggle', [TwoFactorAuthController::class, 'toggle'])
+Route::get('/two-factor/setup', [TwoFactorAuthController::class, 'setup'])
     ->middleware('auth')
-    ->name('two-factor.toggle');
+    ->name('two-factor.setup');
+
+Route::post('/two-factor/enable', [TwoFactorAuthController::class, 'enable'])
+    ->middleware('auth')
+    ->name('two-factor.enable');
+
+Route::post('/two-factor/disable', [TwoFactorAuthController::class, 'disable'])
+    ->middleware('auth')
+    ->name('two-factor.disable');
+
+Route::get('/two-factor/recovery-codes', [TwoFactorAuthController::class, 'recoveryCodes'])
+    ->middleware('auth')
+    ->name('two-factor.recovery-codes');
+
+Route::post('/two-factor/recovery-codes/regenerate', [TwoFactorAuthController::class, 'regenerateRecoveryCodes'])
+    ->middleware('auth')
+    ->name('two-factor.recovery-codes.regenerate');

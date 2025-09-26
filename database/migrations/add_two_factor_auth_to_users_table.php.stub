@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->boolean('two_factor_enabled')->default(false);
-            $table->string('two_factor_code')->nullable();
-            $table->timestamp('two_factor_expires_at')->nullable();
+            $table->string('google2fa_secret')->nullable();
+            $table->json('recovery_codes')->nullable();
         });
     }
 
@@ -25,8 +25,8 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('two_factor_enabled');
-            $table->dropColumn('two_factor_code');
-            $table->dropColumn('two_factor_expires_at');
+            $table->dropColumn('google2fa_secret');
+            $table->dropColumn('recovery_codes');
         });
     }
 };

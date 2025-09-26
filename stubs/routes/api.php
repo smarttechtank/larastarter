@@ -46,8 +46,14 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     // Logout
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('api.logout');
 
-    // Two-factor authentication toggle
-    Route::post('/two-factor/toggle', [TwoFactorAuthController::class, 'toggle'])->name('api.two-factor.toggle');
+    // Two-factor authentication management
+    Route::get('/two-factor/setup', [TwoFactorAuthController::class, 'setup'])->name('api.two-factor.setup');
+    Route::post('/two-factor/enable', [TwoFactorAuthController::class, 'enable'])->name('api.two-factor.enable');
+    Route::post('/two-factor/disable', [TwoFactorAuthController::class, 'disable'])->name('api.two-factor.disable');
+
+    // Recovery codes management
+    Route::get('/two-factor/recovery-codes', [TwoFactorAuthController::class, 'recoveryCodes'])->name('api.two-factor.recovery-codes');
+    Route::post('/two-factor/recovery-codes/regenerate', [TwoFactorAuthController::class, 'regenerateRecoveryCodes'])->name('api.two-factor.recovery-codes.regenerate');
 
     // User profile
     Route::match(['put', 'patch'], '/users/update-profile', [UserAPIController::class, 'updateProfile'])

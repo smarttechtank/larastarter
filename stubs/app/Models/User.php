@@ -4,8 +4,9 @@ namespace App\Models;
 
 use Laravel\Sanctum\HasApiTokens;
 use App\Notifications\VerifyEmail;
-use App\Notifications\TwoFactorCode;
 use App\Notifications\ExtendedPasswordReset;
+use PragmaRX\Recovery\Recovery;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -59,8 +60,8 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
-        'two_factor_code',
-        'two_factor_expires_at',
+        'google2fa_secret',
+        'recovery_codes',
     ];
 
     /**
@@ -83,7 +84,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_enabled' => 'boolean',
-            'two_factor_expires_at' => 'datetime',
+            'recovery_codes' => 'array',
         ];
     }
 
@@ -101,57 +102,196 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
-     * Generate a two-factor authentication code for the user.
+     * Generate a Google 2FA secret for the user.
      *
      * @return string
      */
-    public function generateTwoFactorCode(): string
+    public function generateGoogle2FASecret(): string
     {
-        // Generate a random 6-digit code
-        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $google2fa = app('pragmarx.google2fa');
+        $secret = $google2fa->generateSecretKey();
 
-        // Save the code and set expiration time (10 minutes from now)
-        $this->two_factor_code = $code;
-        $this->two_factor_expires_at = now()->addMinutes(10);
+        $this->google2fa_secret = $secret;
         $this->save();
 
-        return $code;
+        return $secret;
     }
 
     /**
-     * Reset the two-factor authentication code.
+     * Get or generate the Google 2FA secret for the user.
      *
-     * @return void
+     * @return string
      */
-    public function resetTwoFactorCode(): void
+    public function getGoogle2FASecret(): string
     {
-        $this->two_factor_code = null;
-        $this->two_factor_expires_at = null;
-        $this->save();
+        if (empty($this->google2fa_secret)) {
+            return $this->generateGoogle2FASecret();
+        }
+
+        return $this->google2fa_secret;
     }
 
     /**
-     * Verify if the provided two-factor authentication code is valid.
+     * Get the Google 2FA QR code URL.
+     *
+     * @return string
+     */
+    public function getGoogle2FAQRCodeUrl(): string
+    {
+        $google2fa = app('pragmarx.google2fa');
+        $companyName = config('app.name');
+        $companyEmail = $this->email;
+        $secret = $this->getGoogle2FASecret();
+
+        return $google2fa->getQRCodeUrl(
+            $companyName,
+            $companyEmail,
+            $secret
+        );
+    }
+
+    /**
+     * Verify the Google 2FA code.
      *
      * @param string $code
      * @return bool
      */
-    public function verifyTwoFactorCode(string $code): bool
+    public function verifyGoogle2FACode(string $code): bool
     {
-        // Check if code matches and has not expired
-        if (
-            $this->two_factor_code === $code &&
-            $this->two_factor_expires_at &&
-            now()->lt($this->two_factor_expires_at)
-        ) {
-
-            // Reset the code after successful verification
-            $this->resetTwoFactorCode();
-
-            return true;
+        if (empty($this->google2fa_secret)) {
+            return false;
         }
 
-        return false;
+        $google2fa = app('pragmarx.google2fa');
+        return $google2fa->verifyKey($this->google2fa_secret, $code);
+    }
+
+    /**
+     * Reset the Google 2FA secret.
+     *
+     * @return void
+     */
+    public function resetGoogle2FASecret(): void
+    {
+        $this->google2fa_secret = null;
+        $this->save();
+    }
+
+    /**
+     * Generate recovery codes for the user.
+     *
+     * @param int $count Number of recovery codes to generate
+     * @return array
+     */
+    public function generateRecoveryCodes(int $count = 8): array
+    {
+        $recovery = new Recovery();
+        $codes = $recovery->setCount($count)->toArray();
+
+        // Encrypt the codes before storing
+        $encryptedCodes = array_map(function ($code) {
+            return [
+                'code' => Crypt::encryptString($code),
+                'used' => false,
+                'used_at' => null
+            ];
+        }, $codes);
+
+        $this->recovery_codes = $encryptedCodes;
+        $this->save();
+
+        return $codes; // Return plain codes for display to user
+    }
+
+    /**
+     * Get recovery codes (decrypted).
+     *
+     * @return array
+     */
+    public function getRecoveryCodes(): array
+    {
+        if (empty($this->recovery_codes)) {
+            return [];
+        }
+
+        return array_map(function ($codeData) {
+            return [
+                'code' => Crypt::decryptString($codeData['code']),
+                'used' => $codeData['used'],
+                'used_at' => $codeData['used_at']
+            ];
+        }, $this->recovery_codes);
+    }
+
+    /**
+     * Get unused recovery codes.
+     *
+     * @return array
+     */
+    public function getUnusedRecoveryCodes(): array
+    {
+        return array_filter($this->getRecoveryCodes(), function ($codeData) {
+            return !$codeData['used'];
+        });
+    }
+
+    /**
+     * Verify and use a recovery code.
+     *
+     * @param string $code
+     * @return bool
+     */
+    public function verifyRecoveryCode(string $code): bool
+    {
+        if (empty($this->recovery_codes)) {
+            return false;
+        }
+
+        $recoveryCodes = $this->recovery_codes;
+        $codeFound = false;
+
+        foreach ($recoveryCodes as $index => $codeData) {
+            if (!$codeData['used']) {
+                try {
+                    $decryptedCode = Crypt::decryptString($codeData['code']);
+                    if ($decryptedCode === $code) {
+                        // Mark the code as used
+                        $recoveryCodes[$index]['used'] = true;
+                        $recoveryCodes[$index]['used_at'] = now()->toDateTimeString();
+                        $this->recovery_codes = $recoveryCodes;
+                        $this->save();
+                        $codeFound = true;
+                        break;
+                    }
+                } catch (\Exception $e) {
+                    // Skip invalid encrypted codes
+                    continue;
+                }
+            }
+        }
+
+        return $codeFound;
+    }
+
+    /**
+     * Check if user has unused recovery codes.
+     *
+     * @return bool
+     */
+    public function hasUnusedRecoveryCodes(): bool
+    {
+        return count($this->getUnusedRecoveryCodes()) > 0;
+    }
+
+    /**
+     * Reset all recovery codes.
+     *
+     * @return void
+     */
+    public function resetRecoveryCodes(): void
+    {
+        $this->recovery_codes = null;
+        $this->save();
     }
 
     /**
@@ -228,16 +368,6 @@ class User extends Authenticatable implements MustVerifyEmail
                 ? Storage::disk('public')->url($this->avatar)
                 : null,
         );
-    }
-
-    /**
-     * Send the two-factor authentication code to the user.
-     *
-     * @return void
-     */
-    public function sendTwoFactorCodeNotification(): void
-    {
-        $this->notify(new TwoFactorCode($this->two_factor_code));
     }
 
     /**

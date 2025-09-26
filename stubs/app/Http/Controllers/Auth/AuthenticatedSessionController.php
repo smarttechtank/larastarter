@@ -22,49 +22,25 @@ class AuthenticatedSessionController extends AppBaseController
 
         // Check if 2FA is enabled for this user
         if ($user->two_factor_enabled) {
-            try {
-                // Generate a new 2FA code
-                $code = $user->generateTwoFactorCode();
+            // Logout the user as they need to verify with Google 2FA
+            Auth::logout();
 
-                // Send the 2FA code to the user
-                $user->sendTwoFactorCodeNotification();
-
-                // Logout the user as they need to verify the 2FA code
-                Auth::logout();
-
-                // Return response based on request type
-                if ($request->isTokenRequest()) {
-                    $data = [
-                        'two_factor_auth_required' => true,
-                        'email' => $user->email
-                    ];
-                    return $this->sendResponse($data, 'Two-factor authentication code has been sent to your email.');
-                }
-
+            // Return response indicating 2FA verification is required
+            if ($request->isTokenRequest()) {
                 $data = [
                     'two_factor_auth_required' => true,
-                    'email' => $user->email
+                    'email' => $user->email,
+                    'message' => 'Please enter the 6-digit code from your Google Authenticator app'
                 ];
-                return $this->sendResponse($data, 'Two-factor authentication required.');
-            } catch (\Exception $e) {
-                // Re-authenticate the user since we're skipping 2FA due to an error
-                Auth::login($user);
-
-                if ($request->isTokenRequest()) {
-                    $user->load('role');
-                    $token = $user->createToken('auth-token')->plainTextToken;
-
-                    $data = [
-                        'user' => $user,
-                        'token' => $token
-                    ];
-                    return $this->sendResponse($data, 'Two-factor authentication is enabled but the code could not be sent. You have been logged in without 2FA verification.');
-                }
-
-                $request->session()->regenerate();
-
-                return response()->noContent();
+                return $this->sendResponse($data, 'Google 2FA verification required.');
             }
+
+            $data = [
+                'two_factor_auth_required' => true,
+                'email' => $user->email,
+                'message' => 'Please enter the 6-digit code from your Google Authenticator app'
+            ];
+            return $this->sendResponse($data, 'Google 2FA verification required.');
         }
 
         // If 2FA is not enabled, continue with normal authentication
