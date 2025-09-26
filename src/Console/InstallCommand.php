@@ -511,12 +511,12 @@ class InstallCommand extends Command
 
             if (!isset($composerJson['require']['pragmarx/google2fa-laravel'])) {
                 $this->info('Adding pragmarx/google2fa-laravel to composer.json');
-                $composerJson['require']['pragmarx/google2fa-laravel'] = '^4.0';
+                $composerJson['require']['pragmarx/google2fa-laravel'] = '^2.3';
             }
 
             if (!isset($composerJson['require']['pragmarx/recovery'])) {
                 $this->info('Adding pragmarx/recovery to composer.json');
-                $composerJson['require']['pragmarx/recovery'] = '^3.0';
+                $composerJson['require']['pragmarx/recovery'] = '^0.2.1';
             }
 
             // Add IDE helper commands to post-update-cmd if not already added
