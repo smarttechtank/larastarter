@@ -86,8 +86,10 @@ class InstallCommand extends Command
         // Update auth files
         $this->updateAuthFiles();
 
-        // Install email views
-        $this->installEmailViews();
+        // Note: Email views installation skipped as package uses Laravel's default MailMessage
+        // Email notifications (VerifyEmail, PasswordReset, EmailChange) don't require custom views
+        // Uncomment below if custom email views are added in the future:
+        // $this->installEmailViews();
 
         // Clean up obsolete files from previous versions
         $this->cleanupObsoleteFiles();

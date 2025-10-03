@@ -53,10 +53,12 @@ class LarastarterServiceProvider extends ServiceProvider
             __DIR__ . '/../stubs/database/seeders/' => database_path('seeders/'),
         ], 'larastarter-seeders');
 
-        // Publish views
-        $this->publishes([
-            __DIR__ . '/../stubs/resources/views/emails/' => resource_path('views/emails/'),
-        ], 'larastarter-views');
+        // Note: Email views publishing removed as no custom views are currently provided
+        // Email notifications use Laravel's default MailMessage which doesn't require custom views
+        // Uncomment below if you add custom email views in the future:
+        // $this->publishes([
+        //     __DIR__ . '/../stubs/resources/views/emails/' => resource_path('views/emails/'),
+        // ], 'larastarter-views');
 
         // Publish stubs
         $this->publishes([
