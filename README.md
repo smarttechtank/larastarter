@@ -11,6 +11,7 @@ A Laravel package that sets up a starter project with API stack, role-based auth
 - Two-factor authentication via Google Authenticator
 - User avatar upload and management system
 - User phone number management with international format support
+- Secure email change with verification flow
 - Comprehensive user search, filtering, and sorting capabilities
 - Bulk user management operations with proper authorization
 - API controllers for users and roles
@@ -74,16 +75,17 @@ This will:
 2. Install Google 2FA packages (bacon/bacon-qr-code, pragmarx/google2fa-laravel, pragmarx/recovery)
 3. Configure CORS for API access
 4. Set up frontend URL environment variable
-5. Create the necessary migrations for roles and Google Authenticator 2FA
+5. Create the necessary migrations for roles, Google Authenticator 2FA, avatar, phone, and email change fields
 6. Install the Role model
-7. Update the User model to support roles and Google Authenticator 2FA
+7. Update the User model to support roles, Google Authenticator 2FA, avatar, phone, and email change verification
 8. Install repositories for users and roles
 9. Install policies for authorization
 10. Install middleware for API protection and email verification
 11. Install database seeders
 12. Install request validation classes
 13. Install API controllers and routes
-14. Configure IDE Helper
+14. Install notification classes for email verification, password reset, and email change alerts
+15. Configure IDE Helper
 
 The installation process uses Laravel Prompts to provide an interactive user experience. When files already exist, you'll be presented with a selection prompt asking if you want to replace the file, with "Yes" as the default option.
 
@@ -138,7 +140,7 @@ LaraStarter sets up a complete API authentication system using Laravel Sanctum:
 
 **Profile Management** (for authenticated users):
 
-- `PUT/PATCH /api/users/update-profile` - Update user profile (name, email, phone)
+- `PUT/PATCH /api/users/update-profile` - Update user profile (name, phone) - _Note: Email changes require separate verification_
 - `PUT/PATCH /api/users/update-password` - Update user password
 
 ### Avatar Management Routes
@@ -147,6 +149,16 @@ LaraStarter sets up a complete API authentication system using Laravel Sanctum:
 - `DELETE /api/users/delete-avatar` - Delete user avatar
 
 **Note:** The `avatar_url` is automatically included in all User JSON responses for easy frontend integration.
+
+### Email Change Routes
+
+- `POST /api/users/email-change/request` - Request to change email address (requires password confirmation)
+- `POST /api/users/email-change/resend` - Resend verification email to pending email address (throttled)
+- `GET /api/email-change/verify/{id}/{token}/{email}` - Verify and complete email change (signed URL)
+- `GET /api/users/email-change/status` - Get current pending email change status
+- `DELETE /api/users/email-change/cancel` - Cancel pending email change request
+
+**Note:** Email changes require verification via a signed URL sent to the new email address. The verification link expires after 60 minutes, and requests are throttled to prevent abuse (5-minute cooldown between initial requests). Users can resend verification emails if they didn't receive it, which generates a new token and resets the expiration timer.
 
 ## User Profile Management
 
@@ -160,9 +172,54 @@ LaraStarter provides comprehensive user profile management capabilities:
 - **Validation patterns** - Accepts formats like `+1-234-567-8900`, `(555) 123-4567`, `+44 20 1234 5678`
 - **Regex validation** - Uses pattern `/^[\+]?[0-9\-\(\)\s]+$/` for validation
 
+### Email Change with Verification
+
+LaraStarter implements a secure email change workflow to prevent unauthorized email modifications:
+
+- **Password Confirmation** - Users must confirm their current password to request an email change
+- **Verification Email** - A verification email is sent to the new email address with a signed URL
+- **Token Expiration** - Verification links expire after 60 minutes (configurable via `auth.verification.expire`)
+- **Throttling Protection** - Requests are throttled to 5 minutes between attempts to prevent abuse
+- **Cancel Pending Changes** - Users can cancel pending email change requests at any time
+- **Resend Verification** - Users can request a new verification email if they didn't receive the original
+- **Status Checking** - API endpoint to check if there's a pending email change
+- **Automatic Verification** - Once verified, the new email is automatically marked as verified
+- **Support for Both API and Web** - Works with both token-based (API) and session-based (web) authentication
+
+**Security Features:**
+
+- Tokens are securely hashed before storage
+- Verification URLs are cryptographically signed
+- Old email addresses remain unchanged until verification is complete
+- Admin updates (via `/api/users/{id}`) can directly update email without verification
+- **Dual notification system** for enhanced security:
+  - Success notification sent to the new email address
+  - Security alert sent to the old email address (delayed by 60 seconds)
+  - Allows users to detect unauthorized changes
+  - All notifications are queued for background processing
+
+**Workflow:**
+
+1. User requests email change with password confirmation
+2. System validates new email is not already in use
+3. Verification email sent to new address
+4. User clicks verification link (or can request resend if email wasn't received)
+5. System verifies token and updates email
+6. Success notification sent to new email address
+7. Security alert sent to old email address with instructions for unauthorized changes
+8. Old tokens are automatically cleaned up
+
+**Resend Feature Details:**
+
+- Generates a new verification token when resending
+- Resets the 60-minute expiration timer
+- Throttled to prevent spam (6 attempts per minute via rate limiting)
+- Fails if the original request has already expired (requires new request instead)
+
 ### Profile Features
 
-- Update name, email, and phone number
+- Update name and phone number via profile endpoint
+- Email changes require separate verification flow (see Email Change section)
 - Email uniqueness validation (excludes current user during updates)
 - Secure password updates with proper authorization
 - Avatar upload and management

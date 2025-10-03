@@ -34,6 +34,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'role_id',
         'two_factor_enabled',
         'avatar',
+        'pending_email',
+        'email_change_token',
+        'email_change_requested_at',
     ];
 
     /**
@@ -62,6 +65,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'remember_token',
         'google2fa_secret',
         'recovery_codes',
+        'email_change_token',
     ];
 
     /**
@@ -82,6 +86,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'email_change_requested_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_enabled' => 'boolean',
             'recovery_codes' => 'array',

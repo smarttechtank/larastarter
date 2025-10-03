@@ -40,6 +40,7 @@ class LarastarterServiceProvider extends ServiceProvider
             __DIR__ . '/../database/migrations/add_two_factor_auth_to_users_table.php.stub' => database_path('migrations/0001_01_01_000005_add_two_factor_auth_to_users_table.php'),
             __DIR__ . '/../database/migrations/add_avatar_to_users_table.php.stub' => database_path('migrations/0001_01_01_000006_add_avatar_to_users_table.php'),
             __DIR__ . '/../database/migrations/add_phone_to_users_table.php.stub' => database_path('migrations/0001_01_01_000007_add_phone_to_users_table.php'),
+            __DIR__ . '/../database/migrations/add_email_change_fields_to_users_table.php.stub' => database_path('migrations/0001_01_01_000008_add_email_change_fields_to_users_table.php'),
         ], 'larastarter-migrations');
 
         // Publish factories

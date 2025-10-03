@@ -36,6 +36,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
         ->middleware(['throttle:6,1'])
         ->name('api.verification.send');
+
+    // Email change verification
+    Route::get('/email-change/verify/{id}/{token}/{email}', [UserAPIController::class, 'verifyEmailChange'])
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('api.email-change.verify');
 });
 
 // Authenticated routes
@@ -68,6 +73,17 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         ->name('user.avatar.upload');
     Route::delete('/users/delete-avatar', [UserAPIController::class, 'deleteAvatar'])
         ->name('user.avatar.delete');
+
+    // User email change management
+    Route::post('/users/email-change/request', [UserAPIController::class, 'requestEmailChange'])
+        ->name('api.user.email-change.request');
+    Route::post('/users/email-change/resend', [UserAPIController::class, 'resendEmailChangeVerification'])
+        ->middleware(['throttle:6,1'])
+        ->name('api.user.email-change.resend');
+    Route::delete('/users/email-change/cancel', [UserAPIController::class, 'cancelEmailChange'])
+        ->name('api.user.email-change.cancel');
+    Route::get('/users/email-change/status', [UserAPIController::class, 'getEmailChangeStatus'])
+        ->name('api.user.email-change.status');
 
     // User bulk delete
     Route::delete('/users/bulk-delete', [UserAPIController::class, 'bulkDestroy'])

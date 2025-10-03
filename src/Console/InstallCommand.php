@@ -310,6 +310,7 @@ class InstallCommand extends Command
         $requests = [
             'BulkDestroyRolesRequest.php',
             'BulkDestroyUsersRequest.php',
+            'RequestEmailChangeRequest.php',
             'ResendPasswordResetRequest.php',
             'StoreRoleRequest.php',
             'StoreUserRequest.php',
@@ -317,6 +318,7 @@ class InstallCommand extends Command
             'UpdateUserRequest.php',
             'UpdateUserPasswordRequest.php',
             'UpdateUserAvatarRequest.php',
+            'VerifyEmailChangeRequest.php',
         ];
 
         foreach ($requests as $request) {
@@ -391,6 +393,24 @@ class InstallCommand extends Command
         $this->copyFile(
             __DIR__ . '/../../stubs/app/Notifications/ExtendedPasswordReset.php',
             app_path('Notifications/ExtendedPasswordReset.php')
+        );
+
+        // Copy EmailChangeVerification notification
+        $this->copyFile(
+            __DIR__ . '/../../stubs/app/Notifications/EmailChangeVerification.php',
+            app_path('Notifications/EmailChangeVerification.php')
+        );
+
+        // Copy EmailChangeAlert notification
+        $this->copyFile(
+            __DIR__ . '/../../stubs/app/Notifications/EmailChangeAlert.php',
+            app_path('Notifications/EmailChangeAlert.php')
+        );
+
+        // Copy EmailChangeSuccess notification
+        $this->copyFile(
+            __DIR__ . '/../../stubs/app/Notifications/EmailChangeSuccess.php',
+            app_path('Notifications/EmailChangeSuccess.php')
         );
     }
 
@@ -616,6 +636,7 @@ class InstallCommand extends Command
             '/^\d{4}_\d{2}_\d{2}_\d{6}_add_two_factor_auth_to_users_table\.php$/',
             '/^\d{4}_\d{2}_\d{2}_\d{6}_add_avatar_to_users_table\.php$/',
             '/^\d{4}_\d{2}_\d{2}_\d{6}_add_phone_to_users_table\.php$/',
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_add_email_change_fields_to_users_table\.php$/',
         ];
 
         $migrationsPath = database_path('migrations');
@@ -687,6 +708,7 @@ class InstallCommand extends Command
             '/^\d{4}_\d{2}_\d{2}_\d{6}_add_two_factor_auth_to_users_table\.php$/',
             '/^\d{4}_\d{2}_\d{2}_\d{6}_add_avatar_to_users_table\.php$/',
             '/^\d{4}_\d{2}_\d{2}_\d{6}_add_phone_to_users_table\.php$/',
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_add_email_change_fields_to_users_table\.php$/',
         ];
 
         $migrationsPath = database_path('migrations');

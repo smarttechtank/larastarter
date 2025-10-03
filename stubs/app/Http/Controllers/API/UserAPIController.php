@@ -13,7 +13,10 @@ use App\Http\Requests\BulkDestroyUsersRequest;
 use App\Http\Requests\UpdateUserPasswordRequest;
 use App\Http\Requests\UpdateUserAvatarRequest;
 use App\Http\Requests\ResendPasswordResetRequest;
+use App\Http\Requests\RequestEmailChangeRequest;
+use App\Http\Requests\VerifyEmailChangeRequest;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Http\RedirectResponse;
 
 class UserAPIController extends AppBaseController
 {
@@ -105,6 +108,8 @@ class UserAPIController extends AppBaseController
         $this->authorize('update', $user);
 
         // Prepare update data
+        // Note: Admin updates can include email (bypasses verification for admin convenience)
+        // Consider removing 'email' for stricter security in production environments
         $data = $request->only(['name', 'email', 'phone', 'role_id']);
 
         // Update user
@@ -129,8 +134,8 @@ class UserAPIController extends AppBaseController
         // Check if user has permission to update the user
         $this->authorize('update', $user);
 
-        // Prepare update data
-        $data = $request->only(['name', 'email', 'phone']);
+        // Prepare update data (email changes now require separate verification)
+        $data = $request->only(['name', 'phone']);
 
         // Update user
         $this->userRepository->update($data, $user->id);
@@ -315,6 +320,151 @@ class UserAPIController extends AppBaseController
 
         // Resend password reset link
         $result = $this->userRepository->resendPasswordResetLink($userId);
+
+        if ($result['success']) {
+            return $this->sendSuccess($result['message']);
+        } else {
+            return $this->sendError($result['message'], $result['status']);
+        }
+    }
+
+    /**
+     * Request an email change for the authenticated user.
+     */
+    public function requestEmailChange(RequestEmailChangeRequest $request): JsonResponse
+    {
+        // Get authenticated user
+        $user = Auth::user();
+
+        // Check if user is authenticated
+        if (!$user) {
+            return $this->sendError('User not authenticated.', 401);
+        }
+
+        // Check if user has permission to update their email
+        $this->authorize('update', $user);
+
+        // Get validated data
+        $newEmail = $request->validated('new_email');
+
+        // Check if API request to determine route type
+        $useApiRoute = $request->hasHeader('X-Request-Token');
+
+        // Request email change
+        $result = $this->userRepository->requestEmailChange($user->id, $newEmail, $useApiRoute);
+
+        if ($result['success']) {
+            return $this->sendSuccess($result['message']);
+        } else {
+            return $this->sendError($result['message'], $result['status']);
+        }
+    }
+
+    /**
+     * Verify and complete an email change.
+     */
+    public function verifyEmailChange(VerifyEmailChangeRequest $request): JsonResponse | RedirectResponse
+    {
+        // Get route parameters (already validated in request)
+        $userId = $request->route('id');
+        $token = $request->route('token');
+        $newEmail = $request->route('email');
+
+        // Verify email change
+        $result = $this->userRepository->verifyEmailChange($userId, $token, $newEmail);
+
+        if ($result['success']) {
+            // For API requests, return JSON response
+            if ($request->hasHeader('X-Request-Token')) {
+                return $this->sendSuccess($result['message']);
+            }
+
+            // For web requests, redirect to frontend
+            return redirect()->intended(
+                config('app.frontend_url') . '/settings?tab=profile&email-change=1'
+            );
+        } else {
+            // For API requests, return JSON error
+            if ($request->hasHeader('X-Request-Token')) {
+                return $this->sendError($result['message'], $result['status']);
+            }
+
+            // For web requests, redirect with error
+            return redirect()->to(
+                config('app.frontend_url') . '/settings?tab=profile&email-change=0'
+            );
+        }
+    }
+
+    /**
+     * Cancel a pending email change for the authenticated user.
+     */
+    public function cancelEmailChange(): JsonResponse
+    {
+        // Get authenticated user
+        $user = Auth::user();
+
+        // Check if user is authenticated
+        if (!$user) {
+            return $this->sendError('User not authenticated.', 401);
+        }
+
+        // Check if user has permission to update their email
+        $this->authorize('update', $user);
+
+        // Cancel email change
+        $result = $this->userRepository->cancelEmailChange($user->id);
+
+        if ($result['success']) {
+            return $this->sendSuccess($result['message']);
+        } else {
+            return $this->sendError($result['message'], $result['status']);
+        }
+    }
+
+    /**
+     * Get the current user's pending email change status.
+     */
+    public function getEmailChangeStatus(): JsonResponse
+    {
+        // Get authenticated user
+        $user = Auth::user();
+
+        // Check if user is authenticated
+        if (!$user) {
+            return $this->sendError('User not authenticated.', 401);
+        }
+
+        $data = [
+            'has_pending_change' => !empty($user->pending_email),
+            'pending_email' => $user->pending_email,
+            'requested_at' => $user->email_change_requested_at,
+        ];
+
+        return $this->sendResponse($data, 'Email change status retrieved successfully');
+    }
+
+    /**
+     * Resend email change verification to the authenticated user's pending email.
+     */
+    public function resendEmailChangeVerification(Request $request): JsonResponse
+    {
+        // Get authenticated user
+        $user = Auth::user();
+
+        // Check if user is authenticated
+        if (!$user) {
+            return $this->sendError('User not authenticated.', 401);
+        }
+
+        // Check if user has permission to update their email
+        $this->authorize('update', $user);
+
+        // Check if API request to determine route type
+        $useApiRoute = $request->hasHeader('X-Request-Token');
+
+        // Resend email change verification
+        $result = $this->userRepository->resendEmailChangeVerification($user->id, $useApiRoute);
 
         if ($result['success']) {
             return $this->sendSuccess($result['message']);
