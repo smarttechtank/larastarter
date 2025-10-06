@@ -112,4 +112,17 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Email Change Alert Delay
+    |--------------------------------------------------------------------------
+    |
+    | This value determines the delay in seconds before sending an email
+    | change alert notification to the old email address. This provides
+    | a small buffer to prevent immediate notification delivery.
+    |
+    */
+
+    'email_change_alert_delay' => env('EMAIL_CHANGE_ALERT_DELAY', 60),
+
 ];

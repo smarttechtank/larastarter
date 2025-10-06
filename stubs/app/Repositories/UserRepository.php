@@ -471,7 +471,7 @@ class UserRepository extends BaseRepository
 
             // Send security alert to OLD email address with slight delay (using anonymous notifiable)
             Notification::route('mail', $oldEmail)
-                ->notify((new EmailChangeAlert($oldEmail, $newEmail, $userName, $changedAt))->delay(now()->addSeconds(60)));
+                ->notify((new EmailChangeAlert($oldEmail, $newEmail, $userName, $changedAt))->delay(now()->addSeconds(config('auth.email_change_alert_delay', 60))));
 
             return [
                 'success' => true,
