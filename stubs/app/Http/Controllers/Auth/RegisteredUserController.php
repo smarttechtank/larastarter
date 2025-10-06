@@ -31,6 +31,8 @@ class RegisteredUserController extends AppBaseController
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->string('password')),
+            // default role is user role
+            'role_id' => Role::where('name', 'user')->first()->id,
         ]);
 
         event(new Registered($user));
