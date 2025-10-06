@@ -385,8 +385,8 @@ class UserRepository extends BaseRepository
             $user->email_change_requested_at = now();
             $user->save();
 
-            // Send verification notification to the new email
-            $user->notify(new EmailChangeVerification($token, $newEmail, $useApiRoute));
+            // Send verification notification to the new email address
+            Notification::route('mail', $newEmail)->notify(new EmailChangeVerification($token, $newEmail, $useApiRoute));
 
             return [
                 'success' => true,
