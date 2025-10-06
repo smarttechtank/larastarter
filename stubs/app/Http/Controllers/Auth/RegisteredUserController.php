@@ -11,6 +11,7 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\Events\Registered;
+use App\Models\Role;
 
 class RegisteredUserController extends AppBaseController
 {
