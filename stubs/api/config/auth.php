@@ -123,6 +123,21 @@ return [
     |
     */
 
-    'email_change_alert_delay' => env('EMAIL_CHANGE_ALERT_DELAY', 60),
+    'email_change_alert_delay' => (int) env('EMAIL_CHANGE_ALERT_DELAY', 60),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Email Verification
+    |--------------------------------------------------------------------------
+    |
+    | Here you may specify the number of minutes before an email verification
+    | link expires. By default, the verification link will expire after 60
+    | minutes.
+    |
+    */
+
+    'verification' => [
+        'expire' => (int) env('VERIFICATION_EXPIRE_MINUTES', 60),
+    ],
 
 ];

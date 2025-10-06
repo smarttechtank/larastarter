@@ -438,7 +438,7 @@ class UserRepository extends BaseRepository
             }
 
             // Check if token hasn't expired
-            $expireTime = config('auth.verification.expire', 60);
+            $expireTime = (int) config('auth.verification.expire', 60);
             if ($user->email_change_requested_at->addMinutes($expireTime)->isPast()) {
                 // Clean up expired request
                 $this->clearEmailChangeRequest($user->id);
@@ -561,7 +561,7 @@ class UserRepository extends BaseRepository
 
         try {
             // Check if token hasn't expired
-            $expireTime = config('auth.verification.expire', 60);
+            $expireTime = (int) config('auth.verification.expire', 60);
             if ($user->email_change_requested_at->addMinutes($expireTime)->isPast()) {
                 // Clean up expired request
                 $this->clearEmailChangeRequest($user->id);

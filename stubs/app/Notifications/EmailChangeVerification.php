@@ -69,7 +69,7 @@ class EmailChangeVerification extends Notification
      */
     protected function verificationUrl($notifiable): string
     {
-        $verificationExpireTime = Config::get(
+        $verificationExpireTime = (int) Config::get(
             'auth.verification.expire',
             Config::get('auth.passwords.users.expire', 60)
         );

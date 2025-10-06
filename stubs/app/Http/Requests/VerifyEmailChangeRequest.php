@@ -37,7 +37,7 @@ class VerifyEmailChangeRequest extends FormRequest
         }
 
         // Check if the token hasn't expired (default 60 minutes)
-        $expireTime = config('auth.verification.expire', 60);
+        $expireTime = (int) config('auth.verification.expire', 60);
         if ($user->email_change_requested_at->addMinutes($expireTime)->isPast()) {
             return false;
         }

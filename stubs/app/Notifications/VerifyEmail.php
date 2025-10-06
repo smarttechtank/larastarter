@@ -18,7 +18,7 @@ class VerifyEmail extends \Illuminate\Auth\Notifications\VerifyEmail
 
     protected function verificationUrl($notifiable)
     {
-        $verificationExpireTime = Config::get(
+        $verificationExpireTime = (int) Config::get(
             'auth.verification.expire',
             Config::get('auth.passwords.users.expire', 60)
         );
