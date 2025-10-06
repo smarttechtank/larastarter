@@ -386,7 +386,7 @@ class UserRepository extends BaseRepository
             $user->save();
 
             // Send verification notification to the new email address
-            Notification::route('mail', $newEmail)->notify(new EmailChangeVerification($token, $newEmail, $useApiRoute));
+            Notification::route('mail', $newEmail)->notify(new EmailChangeVerification($token, $newEmail, $user->id, $useApiRoute));
 
             return [
                 'success' => true,
@@ -581,7 +581,7 @@ class UserRepository extends BaseRepository
             $user->save();
 
             // Resend verification notification to the pending email
-            $user->notify(new EmailChangeVerification($token, $user->pending_email, $useApiRoute));
+            Notification::route('mail', $user->pending_email)->notify(new EmailChangeVerification($token, $user->pending_email, $user->id, $useApiRoute));
 
             return [
                 'success' => true,

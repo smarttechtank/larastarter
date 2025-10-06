@@ -16,18 +16,21 @@ class EmailChangeVerification extends Notification
     protected string $token;
     protected string $newEmail;
     protected bool $useApiRoute;
+    protected int $userId;
 
     /**
      * Create a new notification instance.
      *
      * @param string $token The verification token
      * @param string $newEmail The new email address to verify
+     * @param int $userId The user ID
      * @param bool $useApiRoute Whether to use API routes for verification
      */
-    public function __construct(string $token, string $newEmail, bool $useApiRoute = false)
+    public function __construct(string $token, string $newEmail, int $userId, bool $useApiRoute = false)
     {
         $this->token = $token;
         $this->newEmail = $newEmail;
+        $this->userId = $userId;
         $this->useApiRoute = $useApiRoute;
     }
 
@@ -77,7 +80,7 @@ class EmailChangeVerification extends Notification
             $routeName,
             Carbon::now()->addMinutes($verificationExpireTime),
             [
-                'id' => $notifiable->getKey(),
+                'id' => $this->userId,
                 'token' => $this->token,
                 'email' => $this->newEmail,
             ]
