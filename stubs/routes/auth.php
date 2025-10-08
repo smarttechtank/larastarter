@@ -11,7 +11,7 @@ use App\Http\Controllers\API\UserAPIController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [RegisteredUserController::class, 'store'])
-    ->middleware('guest')
+    ->middleware(['guest', 'registration.enabled'])
     ->name('register');
 
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])

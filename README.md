@@ -8,6 +8,7 @@ A Laravel package that sets up a starter project with API stack, role-based auth
 - Cross-Origin Resource Sharing (CORS) configuration
 - Frontend/Backend separation with proper API endpoints
 - Role-based user authentication
+- Configurable user registration control (enable/disable registration)
 - Two-factor authentication via Google Authenticator
 - User avatar upload and management system
 - User phone number management with international format support
@@ -75,17 +76,18 @@ This will:
 2. Install Google 2FA packages (bacon/bacon-qr-code, pragmarx/google2fa-laravel, pragmarx/recovery)
 3. Configure CORS for API access
 4. Set up frontend URL environment variable
-5. Create the necessary migrations for roles, Google Authenticator 2FA, avatar, phone, and email change fields
-6. Install the Role model
-7. Update the User model to support roles, Google Authenticator 2FA, avatar, phone, and email change verification
-8. Install repositories for users and roles
-9. Install policies for authorization
-10. Install middleware for API protection and email verification
-11. Install database seeders
-12. Install request validation classes
-13. Install API controllers and routes
-14. Install notification classes for email verification, password reset, and email change alerts
-15. Configure IDE Helper
+5. Add authentication environment variables (EMAIL_CHANGE_ALERT_DELAY, VERIFICATION_EXPIRE_MINUTES, REGISTRATION_ENABLED)
+6. Create the necessary migrations for roles, Google Authenticator 2FA, avatar, phone, and email change fields
+7. Install the Role model
+8. Update the User model to support roles, Google Authenticator 2FA, avatar, phone, and email change verification
+9. Install repositories for users and roles
+10. Install policies for authorization
+11. Install middleware for API protection, email verification, and registration control
+12. Install database seeders
+13. Install request validation classes
+14. Install API controllers and routes
+15. Install notification classes for email verification, password reset, and email change alerts
+16. Configure IDE Helper
 
 The installation process uses Laravel Prompts to provide an interactive user experience. When files already exist, you'll be presented with a selection prompt asking if you want to replace the file, with "Yes" as the default option.
 
@@ -118,7 +120,7 @@ LaraStarter sets up a complete API authentication system using Laravel Sanctum:
 
 ### API Routes
 
-- `POST /api/register` - Register a new user
+- `POST /api/register` - Register a new user (can be disabled via configuration)
 - `POST /api/login` - Authenticate a user
 - `POST /api/logout` - Log out the current user
 - `GET /api/user` - Get the authenticated user's data
@@ -291,6 +293,8 @@ This provides better code completion and static analysis for your IDE.
 
 ## Configuration
 
+### Role Configuration
+
 You can publish the configuration file to customize the roles:
 
 ```bash
@@ -301,6 +305,36 @@ This will publish a config file at `config/larastarter.php` where you can custom
 
 - Default role for new users
 - Available roles and their descriptions
+
+### Registration Control
+
+LaraStarter provides the ability to enable or disable user registration. This is useful for applications where you want to restrict public registration and only allow administrators to create users.
+
+**Configuration:**
+
+Registration can be controlled via the `REGISTRATION_ENABLED` environment variable in your `.env` file:
+
+```env
+# Authentication Settings
+REGISTRATION_ENABLED=true  # Set to false to disable registration
+```
+
+When registration is disabled (`REGISTRATION_ENABLED=false`), the registration endpoint will return a `403 Forbidden` response with the message "Registration is currently disabled."
+
+**Note:** This only affects the public registration endpoint (`POST /api/register`). Administrators can still create users through the admin user management endpoint (`POST /api/users`).
+
+### Authentication Environment Variables
+
+The following environment variables are automatically added during installation:
+
+```env
+# Authentication Settings
+EMAIL_CHANGE_ALERT_DELAY=60           # Delay in seconds before sending alert to old email
+VERIFICATION_EXPIRE_MINUTES=60        # Minutes before email verification link expires
+REGISTRATION_ENABLED=true             # Enable/disable public user registration
+```
+
+You can customize these values in your `.env` file to match your application's requirements.
 
 ## License
 

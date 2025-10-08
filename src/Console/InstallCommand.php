@@ -86,6 +86,9 @@ class InstallCommand extends Command
         // Update auth files
         $this->updateAuthFiles();
 
+        // Add authentication environment variables
+        $this->addAuthEnvironmentVariables();
+
         // Note: Email views installation skipped as package uses Laravel's default MailMessage
         // Email notifications (VerifyEmail, PasswordReset, EmailChange) don't require custom views
         // Uncomment below if custom email views are added in the future:
@@ -276,6 +279,12 @@ class InstallCommand extends Command
             __DIR__ . '/../../stubs/app/Http/Middleware/EnsureEmailIsVerified.php',
             app_path('Http/Middleware/EnsureEmailIsVerified.php'),
             $this->option('force')
+        );
+
+        // Copy EnsureRegistrationIsEnabled middleware
+        $this->copyFile(
+            __DIR__ . '/../../stubs/app/Http/Middleware/EnsureRegistrationIsEnabled.php',
+            app_path('Http/Middleware/EnsureRegistrationIsEnabled.php')
         );
     }
 
@@ -487,6 +496,48 @@ class InstallCommand extends Command
             base_path('bootstrap/app.php'),
             $this->option('force')
         );
+    }
+
+    protected function addAuthEnvironmentVariables()
+    {
+        $this->info('Adding authentication environment variables...');
+
+        $envFiles = [
+            '.env' => base_path('.env'),
+            '.env.example' => base_path('.env.example'),
+        ];
+
+        foreach ($envFiles as $fileName => $filePath) {
+            if (!file_exists($filePath)) {
+                $this->warn("{$fileName} file not found. Skipping.");
+                continue;
+            }
+
+            $env = file_get_contents($filePath);
+            $envVarsToAdd = [];
+
+            // Check and prepare each environment variable
+            if (!str_contains($env, 'EMAIL_CHANGE_ALERT_DELAY=')) {
+                $envVarsToAdd[] = 'EMAIL_CHANGE_ALERT_DELAY=60';
+            }
+
+            if (!str_contains($env, 'VERIFICATION_EXPIRE_MINUTES=')) {
+                $envVarsToAdd[] = 'VERIFICATION_EXPIRE_MINUTES=60';
+            }
+
+            if (!str_contains($env, 'REGISTRATION_ENABLED=')) {
+                $envVarsToAdd[] = 'REGISTRATION_ENABLED=true';
+            }
+
+            // Add the variables if any are missing
+            if (!empty($envVarsToAdd)) {
+                $authSection = PHP_EOL . PHP_EOL . '# Authentication Settings' . PHP_EOL . implode(PHP_EOL, $envVarsToAdd);
+                file_put_contents($filePath, $env . $authSection);
+                $this->info("Added " . count($envVarsToAdd) . " authentication environment variable(s) to {$fileName}");
+            } else {
+                $this->info("All authentication environment variables already exist in {$fileName}");
+            }
+        }
     }
 
     protected function updateGitignore()

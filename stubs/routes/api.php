@@ -15,7 +15,9 @@ use App\Http\Controllers\Auth\TwoFactorAuthController;
 Route::middleware('guest')->group(function () {
     // Authentication
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('api.login');
-    Route::post('/register', [RegisteredUserController::class, 'store'])->name('api.register');
+    Route::post('/register', [RegisteredUserController::class, 'store'])
+        ->middleware('registration.enabled')
+        ->name('api.register');
 
     // Password reset
     Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('api.password.email');

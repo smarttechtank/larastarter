@@ -140,4 +140,18 @@ return [
         'expire' => (int) env('VERIFICATION_EXPIRE_MINUTES', 60),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Registration Status
+    |--------------------------------------------------------------------------
+    |
+    | This option controls whether user registration is enabled in your
+    | application. When set to false, registration endpoints will return
+    | a 403 Forbidden response. This is useful for applications where
+    | you want to disable public registration.
+    |
+    */
+
+    'registration_enabled' => env('REGISTRATION_ENABLED', true),
+
 ];
