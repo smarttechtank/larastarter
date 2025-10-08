@@ -22,6 +22,11 @@ class RegisteredUserController extends AppBaseController
      */
     public function store(Request $request): Response|JsonResponse
     {
+        // Check if registration is enabled
+        if (!config('auth.registration_enabled', true)) {
+            abort(403, 'Registration is currently disabled.');
+        }
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
