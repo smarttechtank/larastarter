@@ -109,6 +109,9 @@ class InstallCommand extends Command
         // Update composer.json and install ide-helper if not exists
         $this->updateComposerJson();
 
+        // Create storage symlink for avatars
+        $this->createStorageLink();
+
         $this->info('LaraStarter installation complete!');
         $this->info('Remember to run "php artisan migrate" to create the necessary database tables.');
 
@@ -991,6 +994,29 @@ class InstallCommand extends Command
             $this->line('<comment>No obsolete files found to remove.</comment>');
         } else {
             $this->info("Removed {$filesRemoved} obsolete file(s).");
+        }
+    }
+
+    /**
+     * Create storage symlink for public file access.
+     *
+     * @return void
+     */
+    protected function createStorageLink()
+    {
+        $this->info('Creating storage symlink...');
+
+        try {
+            $this->call('storage:link');
+        } catch (\Exception $e) {
+            // If the link already exists, it will throw an exception
+            // We can safely ignore it as the link is already present
+            if (str_contains($e->getMessage(), 'already exists')) {
+                $this->line('<comment>Storage symlink already exists.</comment>');
+            } else {
+                $this->warn('Failed to create storage symlink: ' . $e->getMessage());
+                $this->info('You may need to run "php artisan storage:link" manually.');
+            }
         }
     }
 }

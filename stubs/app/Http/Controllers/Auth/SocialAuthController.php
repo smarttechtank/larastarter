@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\MobileOAuthRequest;
 use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -125,6 +126,9 @@ class SocialAuthController extends AppBaseController
             return redirect($this->getFrontendSettingsUrl() . '&error=' . urlencode($message));
         }
 
+        // Download and store avatar if user doesn't have one
+        $this->downloadAvatarIfNeeded($user, $socialUser);
+
         // Link the provider to current user
         $this->linkProvider($user, $provider, $socialUser);
 
@@ -158,6 +162,9 @@ class SocialAuthController extends AppBaseController
         $user = User::where('email', $email)->first();
 
         if ($user) {
+            // Download and store avatar if user doesn't have one
+            $this->downloadAvatarIfNeeded($user, $socialUser);
+
             // User exists with same email, link the provider and log them in
             $this->linkProvider($user, $provider, $socialUser);
             return $this->authenticateUser($request, $user, $provider, $socialUser);
@@ -276,10 +283,12 @@ class SocialAuthController extends AppBaseController
             $userData['github_refresh_token'] = $socialUser->refreshToken;
         }
 
-        // Handle avatar if available
-        if ($socialUser->avatar && empty($userData['avatar'])) {
-            // You might want to download and store the avatar locally
-            // For now, we'll just store the URL reference
+        // Download and store avatar if available
+        if ($socialUser->avatar) {
+            $avatarPath = $this->downloadAvatarFromUrl($socialUser->avatar, $provider);
+            if ($avatarPath) {
+                $userData['avatar'] = $avatarPath;
+            }
         }
 
         return User::create($userData);
@@ -564,5 +573,109 @@ class SocialAuthController extends AppBaseController
 
         return null;
     }
-}
 
+    /**
+     * Download avatar from URL and store it locally.
+     *
+     * @param string $avatarUrl
+     * @param string $provider
+     * @return string|null Returns the stored file path or null if failed
+     */
+    protected function downloadAvatarFromUrl(string $avatarUrl, string $provider): ?string
+    {
+        try {
+            // Download the image from the URL
+            $response = Http::timeout(10)->get($avatarUrl);
+
+            if (!$response->successful()) {
+                Log::warning('Failed to download avatar from social provider', [
+                    'provider' => $provider,
+                    'url' => $avatarUrl,
+                    'status' => $response->status(),
+                ]);
+                return null;
+            }
+
+            // Get the image content
+            $imageContent = $response->body();
+
+            // Validate image size (limit to 5MB)
+            if (strlen($imageContent) > 5 * 1024 * 1024) {
+                Log::warning('Avatar too large from social provider', [
+                    'provider' => $provider,
+                    'size' => strlen($imageContent),
+                ]);
+                return null;
+            }
+
+            // Detect the file extension from the content type
+            $contentType = $response->header('Content-Type');
+            $extension = $this->getExtensionFromMimeType($contentType);
+
+            if (!$extension) {
+                Log::warning('Invalid avatar content type from social provider', [
+                    'provider' => $provider,
+                    'content_type' => $contentType,
+                ]);
+                return null;
+            }
+
+            // Generate a unique filename
+            $filename = 'avatars/' . uniqid('avatar_' . $provider . '_', true) . '.' . $extension;
+
+            // Store the image
+            Storage::disk('public')->put($filename, $imageContent);
+
+            return $filename;
+        } catch (\Exception $e) {
+            Log::error('Exception while downloading avatar from social provider', [
+                'provider' => $provider,
+                'url' => $avatarUrl,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Download and set avatar for user if they don't have one.
+     *
+     * @param User $user
+     * @param object $socialUser
+     * @return void
+     */
+    protected function downloadAvatarIfNeeded(User $user, $socialUser): void
+    {
+        // Only download if user doesn't have an avatar and social provider has one
+        if (!$user->avatar && !empty($socialUser->avatar)) {
+            $avatarPath = $this->downloadAvatarFromUrl($socialUser->avatar, 'social');
+            if ($avatarPath) {
+                $user->avatar = $avatarPath;
+                $user->save();
+            }
+        }
+    }
+
+    /**
+     * Get file extension from MIME type.
+     *
+     * @param string|null $mimeType
+     * @return string|null
+     */
+    protected function getExtensionFromMimeType(?string $mimeType): ?string
+    {
+        if (!$mimeType) {
+            return null;
+        }
+
+        $mimeMap = [
+            'image/jpeg' => 'jpg',
+            'image/jpg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp',
+        ];
+
+        return $mimeMap[$mimeType] ?? null;
+    }
+}

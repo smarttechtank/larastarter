@@ -9,6 +9,7 @@ Social login functionality has been successfully implemented for Google and GitH
 - ✅ **Account Linking**: Existing users can link OAuth providers to their accounts
 - ✅ **2FA Integration**: Works seamlessly with existing 2FA system
 - ✅ **API & Web Support**: Supports both token-based API and session-based web authentication
+- ✅ **Automatic Avatar Import**: Downloads and stores user avatars from OAuth providers
 
 ## Configuration
 
@@ -200,6 +201,82 @@ OAuth users can also use the standard "Forgot Password" flow:
 4. **CSRF Protection**: All routes include CSRF protection
 5. **Rate Limitations**: OAuth endpoints respect Laravel's rate limiting
 6. **Email Verification**: OAuth users are automatically marked as verified since providers verify emails
+
+## Automatic Avatar Import
+
+LaraStarter automatically downloads and stores user avatars from OAuth providers during authentication to enhance the user experience.
+
+### How It Works
+
+When a user authenticates via OAuth (Google or GitHub), the system:
+
+1. Checks if the user already has an avatar
+2. If no avatar exists, downloads the profile picture from the OAuth provider
+3. Validates the image (size, format)
+4. Stores it locally in `storage/app/public/avatars/`
+5. Updates the user's `avatar` field with the stored path
+
+### When Avatars Are Imported
+
+Avatar import happens automatically in three scenarios:
+
+- **New User Registration**: Profile picture is downloaded when a new account is created via OAuth
+- **Account Linking**: Avatar is downloaded when an existing user (without avatar) links an OAuth provider
+- **Email Matching**: Avatar is downloaded when logging in with OAuth if a user with the same email exists but doesn't have an avatar
+
+### Technical Specifications
+
+**Validation Rules:**
+
+- Maximum file size: 5MB
+- Supported formats: JPEG, PNG, GIF, WebP
+- HTTP timeout: 10 seconds
+- MIME type verification required
+
+**Storage:**
+
+- Location: `storage/app/public/avatars/`
+- Naming pattern: `avatar_{provider}_{unique_id}.{extension}`
+- Accessible via: `Storage::url($user->avatar)` or `$user->avatar_url` attribute
+- Requires storage symlink (automatically created during installation via `php artisan storage:link`)
+
+**Error Handling:**
+
+- Download failures are logged but don't block authentication
+- Invalid formats or oversized images are rejected gracefully
+- Network timeouts fail silently without affecting user creation
+- All errors are logged for troubleshooting
+
+### Example Response
+
+When a user authenticates with OAuth and an avatar is imported, the user object includes:
+
+```json
+{
+  "id": 1,
+  "name": "John Doe",
+  "email": "john@example.com",
+  "avatar": "avatars/avatar_google_abc123.jpg",
+  "avatar_url": "http://your-app.com/storage/avatars/avatar_google_abc123.jpg",
+  "google_id": "123456789",
+  "role": {
+    "id": 2,
+    "name": "user"
+  }
+}
+```
+
+### Updating Avatars
+
+Users can later update their avatar using the avatar management endpoints:
+
+```bash
+# Upload new avatar
+PUT/PATCH /api/users/upload-avatar
+
+# Delete avatar
+DELETE /api/users/delete-avatar
+```
 
 ## Testing
 

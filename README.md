@@ -95,6 +95,7 @@ This will:
 16. Install notification classes for email verification, password reset, and email change alerts
 17. Update configuration files (services.php for OAuth, auth.php for social auth control)
 18. Configure IDE Helper
+19. Create storage symlink for public file access (avatars, etc.)
 
 The installation process uses Laravel Prompts to provide an interactive user experience. When files already exist, you'll be presented with a selection prompt asking if you want to replace the file, with "Yes" as the default option.
 
@@ -268,6 +269,7 @@ LaraStarter includes comprehensive OAuth social authentication support for Googl
 - **API & Web Support**: Supports both token-based API and session-based web authentication
 - **Mobile App Support**: Token-based authentication for native mobile apps (Flutter, React Native)
 - **OAuth-only Users**: Users can authenticate without setting a password
+- **Automatic Avatar Import**: Automatically downloads and stores user avatars from OAuth providers if the user doesn't have one
 
 ### OAuth Routes
 
@@ -299,6 +301,33 @@ GITHUB_CLIENT_SECRET=your_github_client_secret
 ```
 
 For detailed OAuth setup instructions, mobile app integration guides, and security best practices, see [OAUTH_SETUP.md](OAUTH_SETUP.md).
+
+### Automatic Avatar Import
+
+LaraStarter automatically imports user avatars from OAuth providers during authentication:
+
+**When Avatars are Imported:**
+
+- **New User Registration**: When a new user registers via OAuth, their profile picture is automatically downloaded and stored locally
+- **Account Linking**: When an existing user links an OAuth provider and doesn't have an avatar yet
+- **Existing User Login**: When a user with the same email logs in via OAuth and doesn't have an avatar
+
+**Technical Details:**
+
+- Supports Google and GitHub profile pictures
+- Images are validated (5MB max size)
+- Accepted formats: JPEG, PNG, GIF, WebP
+- Stored in `storage/app/public/avatars/` directory
+- Only imports if user doesn't already have an avatar
+- Fails gracefully if download fails (user account is still created/authenticated)
+
+**Security & Performance:**
+
+- HTTP timeout: 10 seconds
+- File size validation to prevent abuse
+- MIME type verification for supported image formats
+- Error logging for troubleshooting
+- Unique filenames to prevent conflicts
 
 ## Two-Factor Authentication
 
