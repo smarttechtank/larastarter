@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\Auth\TwoFactorAuthController;
+use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\API\UserAPIController;
 use Illuminate\Support\Facades\Route;
 
@@ -82,3 +83,30 @@ Route::delete('/users/email-change/cancel', [UserAPIController::class, 'cancelEm
 Route::get('/users/email-change/status', [UserAPIController::class, 'getEmailChangeStatus'])
     ->middleware('auth')
     ->name('user.email-change.status');
+
+// OAuth routes
+Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirectToProvider'])
+    ->middleware('guest')
+    ->name('oauth.redirect')
+    ->where('provider', 'google|github');
+
+Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'handleProviderCallback'])
+    ->name('oauth.callback')
+    ->where('provider', 'google|github');
+
+Route::delete('/auth/{provider}/unlink', [SocialAuthController::class, 'unlinkProvider'])
+    ->middleware('auth:sanctum')
+    ->name('oauth.unlink')
+    ->where('provider', 'google|github');
+
+// OAuth linking routes for authenticated users
+Route::get('/auth/{provider}/link', [SocialAuthController::class, 'redirectToProvider'])
+    ->middleware('auth:sanctum')
+    ->name('oauth.link')
+    ->where('provider', 'google|github');
+
+// Mobile OAuth token authentication route (for native mobile apps)
+Route::post('/auth/{provider}/token', [SocialAuthController::class, 'authenticateWithToken'])
+    ->middleware('throttle:6,1')
+    ->name('oauth.token')
+    ->where('provider', 'google|github');

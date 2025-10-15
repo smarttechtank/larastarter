@@ -37,6 +37,12 @@ class User extends Authenticatable implements MustVerifyEmail
         'pending_email',
         'email_change_token',
         'email_change_requested_at',
+        'google_id',
+        'github_id',
+        'google_token',
+        'github_token',
+        'google_refresh_token',
+        'github_refresh_token',
     ];
 
     /**
@@ -66,6 +72,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'google2fa_secret',
         'recovery_codes',
         'email_change_token',
+        'google_token',
+        'github_token',
+        'google_refresh_token',
+        'github_refresh_token',
     ];
 
     /**
@@ -75,6 +85,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $appends = [
         'avatar_url',
+        'has_password',
     ];
 
     /**
@@ -102,7 +113,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'name' => 'required|string|max:255',
         'email' => 'required|string|max:255|email|unique:users,email',
         'phone' => 'nullable|string|max:20|regex:/^[\+]?[0-9\-\(\)\s]+$/',
-        'password' => 'required|string|min:8|max:255',
+        'password' => 'nullable|string|min:8|max:255',
         'role_id' => 'required|exists:roles,id',
     ];
 
@@ -376,6 +387,19 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the has password attribute.
+     * Used by frontend to determine if user needs to provide old password.
+     *
+     * @return Attribute
+     */
+    protected function hasPassword(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->password !== null,
+        );
+    }
+
+    /**
      * Send the email verification notification with option to specify API route usage.
      *
      * @param  bool  $useApiRoute
@@ -395,5 +419,87 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sendExtendedPasswordResetNotification($token)
     {
         $this->notify(new ExtendedPasswordReset($token));
+    }
+
+    /**
+     * Check if user has Google OAuth linked.
+     *
+     * @return bool
+     */
+    public function hasGoogleLinked(): bool
+    {
+        return !empty($this->google_id);
+    }
+
+    /**
+     * Check if user has GitHub OAuth linked.
+     *
+     * @return bool
+     */
+    public function hasGithubLinked(): bool
+    {
+        return !empty($this->github_id);
+    }
+
+    /**
+     * Link Google OAuth account.
+     *
+     * @param  string  $googleId
+     * @param  string  $token
+     * @param  string|null  $refreshToken
+     * @return void
+     */
+    public function linkGoogleAccount(string $googleId, string $token, ?string $refreshToken = null): void
+    {
+        $this->update([
+            'google_id' => $googleId,
+            'google_token' => $token,
+            'google_refresh_token' => $refreshToken,
+        ]);
+    }
+
+    /**
+     * Link GitHub OAuth account.
+     *
+     * @param  string  $githubId
+     * @param  string  $token
+     * @param  string|null  $refreshToken
+     * @return void
+     */
+    public function linkGithubAccount(string $githubId, string $token, ?string $refreshToken = null): void
+    {
+        $this->update([
+            'github_id' => $githubId,
+            'github_token' => $token,
+            'github_refresh_token' => $refreshToken,
+        ]);
+    }
+
+    /**
+     * Unlink Google OAuth account.
+     *
+     * @return void
+     */
+    public function unlinkGoogleAccount(): void
+    {
+        $this->update([
+            'google_id' => null,
+            'google_token' => null,
+            'google_refresh_token' => null,
+        ]);
+    }
+
+    /**
+     * Unlink GitHub OAuth account.
+     *
+     * @return void
+     */
+    public function unlinkGithubAccount(): void
+    {
+        $this->update([
+            'github_id' => null,
+            'github_token' => null,
+            'github_refresh_token' => null,
+        ]);
     }
 }

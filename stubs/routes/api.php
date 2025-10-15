@@ -3,13 +3,14 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\UserAPIController;
 use App\Http\Controllers\API\RoleAPIController;
+use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Auth\TwoFactorAuthController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
-use App\Http\Controllers\Auth\TwoFactorAuthController;
 
 // Guest routes
 Route::middleware('guest')->group(function () {
@@ -25,6 +26,12 @@ Route::middleware('guest')->group(function () {
 
     // Two-factor authentication verification
     Route::post('/two-factor/verify', [TwoFactorAuthController::class, 'verify'])->name('api.two-factor.verify');
+
+    // Mobile OAuth token authentication route (for native mobile apps)
+    Route::post('/auth/{provider}/token', [SocialAuthController::class, 'authenticateWithToken'])
+        ->middleware('throttle:6,1')
+        ->name('api.oauth.token')
+        ->where('provider', 'google|github');
 });
 
 // Email verification routes
@@ -52,6 +59,11 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     // Logout
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('api.logout');
+
+    // OAuth unlink for API (token-based auth)
+    Route::delete('/auth/{provider}/unlink', [SocialAuthController::class, 'unlinkProvider'])
+        ->name('api.oauth.unlink')
+        ->where('provider', 'google|github');
 
     // Two-factor authentication management
     Route::get('/two-factor/setup', [TwoFactorAuthController::class, 'setup'])->name('api.two-factor.setup');

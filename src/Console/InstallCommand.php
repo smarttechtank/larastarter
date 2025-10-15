@@ -74,6 +74,9 @@ class InstallCommand extends Command
         $this->installApiControllers();
         $this->updateRoutes();
 
+        // Install OAuth social authentication
+        $this->installSocialAuth();
+
         // Update base User model
         $this->updateUserModel();
 
@@ -88,6 +91,9 @@ class InstallCommand extends Command
 
         // Add authentication environment variables
         $this->addAuthEnvironmentVariables();
+
+        // Update config files with OAuth settings
+        $this->updateConfigFiles();
 
         // Note: Email views installation skipped as package uses Laravel's default MailMessage
         // Email notifications (VerifyEmail, PasswordReset, EmailChange) don't require custom views
@@ -425,6 +431,30 @@ class InstallCommand extends Command
         );
     }
 
+    protected function installSocialAuth()
+    {
+        $this->info('Installing OAuth social authentication...');
+
+        // Copy SocialAuthController
+        $this->copyFile(
+            __DIR__ . '/../../stubs/app/Http/Controllers/Auth/SocialAuthController.php',
+            app_path('Http/Controllers/Auth/SocialAuthController.php')
+        );
+
+        // Copy MobileOAuthRequest
+        $this->copyFile(
+            __DIR__ . '/../../stubs/app/Http/Requests/MobileOAuthRequest.php',
+            app_path('Http/Requests/MobileOAuthRequest.php')
+        );
+
+        // Copy UpdateUserPasswordRequest (with OAuth support)
+        $this->copyFile(
+            __DIR__ . '/../../stubs/app/Http/Requests/UpdateUserPasswordRequest.php',
+            app_path('Http/Requests/UpdateUserPasswordRequest.php'),
+            $this->option('force')
+        );
+    }
+
     protected function updateRoutes()
     {
         $this->info('Updating routes...');
@@ -529,6 +559,26 @@ class InstallCommand extends Command
                 $envVarsToAdd[] = 'REGISTRATION_ENABLED=true';
             }
 
+            if (!str_contains($env, 'SOCIAL_AUTH_ENABLED=')) {
+                $envVarsToAdd[] = 'SOCIAL_AUTH_ENABLED=true';
+            }
+
+            if (!str_contains($env, 'GOOGLE_CLIENT_ID=')) {
+                $envVarsToAdd[] = 'GOOGLE_CLIENT_ID=your_google_client_id';
+            }
+
+            if (!str_contains($env, 'GOOGLE_CLIENT_SECRET=')) {
+                $envVarsToAdd[] = 'GOOGLE_CLIENT_SECRET=your_google_client_secret';
+            }
+
+            if (!str_contains($env, 'GITHUB_CLIENT_ID=')) {
+                $envVarsToAdd[] = 'GITHUB_CLIENT_ID=your_github_client_id';
+            }
+
+            if (!str_contains($env, 'GITHUB_CLIENT_SECRET=')) {
+                $envVarsToAdd[] = 'GITHUB_CLIENT_SECRET=your_github_client_secret';
+            }
+
             // Add the variables if any are missing
             if (!empty($envVarsToAdd)) {
                 $authSection = PHP_EOL . PHP_EOL . '# Authentication Settings' . PHP_EOL . implode(PHP_EOL, $envVarsToAdd);
@@ -537,6 +587,86 @@ class InstallCommand extends Command
             } else {
                 $this->info("All authentication environment variables already exist in {$fileName}");
             }
+        }
+    }
+
+    protected function updateConfigFiles()
+    {
+        $this->info('Updating configuration files...');
+
+        // Update or copy services.php config
+        $servicesConfigPath = config_path('services.php');
+        $servicesStubPath = __DIR__ . '/../../stubs/api/config/services.php';
+
+        if (file_exists($servicesConfigPath)) {
+            $this->info('Updating services.php config with OAuth settings...');
+            $servicesContent = file_get_contents($servicesConfigPath);
+
+            // Add Google OAuth config if not exists
+            if (!str_contains($servicesContent, "'google' =>")) {
+                $googleConfig = PHP_EOL . PHP_EOL . "    'google' => [" . PHP_EOL .
+                    "        'client_id' => env('GOOGLE_CLIENT_ID')," . PHP_EOL .
+                    "        'client_secret' => env('GOOGLE_CLIENT_SECRET')," . PHP_EOL .
+                    "        'redirect' => env('APP_URL') . '/auth/google/callback'," . PHP_EOL .
+                    "    ],";
+
+                // Insert before the closing bracket
+                $servicesContent = str_replace(PHP_EOL . '];', $googleConfig . PHP_EOL . '];', $servicesContent);
+                file_put_contents($servicesConfigPath, $servicesContent);
+                $this->info('Added Google OAuth configuration to services.php');
+            }
+
+            // Add GitHub OAuth config if not exists
+            $servicesContent = file_get_contents($servicesConfigPath);
+            if (!str_contains($servicesContent, "'github' =>")) {
+                $githubConfig = PHP_EOL . PHP_EOL . "    'github' => [" . PHP_EOL .
+                    "        'client_id' => env('GITHUB_CLIENT_ID')," . PHP_EOL .
+                    "        'client_secret' => env('GITHUB_CLIENT_SECRET')," . PHP_EOL .
+                    "        'redirect' => env('APP_URL') . '/auth/github/callback'," . PHP_EOL .
+                    "    ],";
+
+                // Insert before the closing bracket
+                $servicesContent = str_replace(PHP_EOL . '];', $githubConfig . PHP_EOL . '];', $servicesContent);
+                file_put_contents($servicesConfigPath, $servicesContent);
+                $this->info('Added GitHub OAuth configuration to services.php');
+            }
+        } else {
+            // Copy the services.php stub if it doesn't exist
+            $this->copyFile($servicesStubPath, $servicesConfigPath);
+            $this->info('Created services.php config with OAuth settings');
+        }
+
+        // Update or copy auth.php config
+        $authConfigPath = config_path('auth.php');
+        $authStubPath = __DIR__ . '/../../stubs/api/config/auth.php';
+
+        if (file_exists($authConfigPath)) {
+            $this->info('Updating auth.php config with social auth setting...');
+            $authContent = file_get_contents($authConfigPath);
+
+            // Add social_auth_enabled config if not exists
+            if (!str_contains($authContent, 'social_auth_enabled')) {
+                $socialAuthConfig = PHP_EOL . PHP_EOL . "    /*" . PHP_EOL .
+                    "    |--------------------------------------------------------------------------" . PHP_EOL .
+                    "    | Social Authentication Status" . PHP_EOL .
+                    "    |--------------------------------------------------------------------------" . PHP_EOL .
+                    "    |" . PHP_EOL .
+                    "    | This option controls whether social authentication (OAuth) is enabled" . PHP_EOL .
+                    "    | in your application. When set to false, social auth endpoints will" . PHP_EOL .
+                    "    | return a 403 Forbidden response. This is useful for applications where" . PHP_EOL .
+                    "    | you want to disable OAuth login methods." . PHP_EOL .
+                    "    |" . PHP_EOL .
+                    "    */" . PHP_EOL . PHP_EOL .
+                    "    'social_auth_enabled' => env('SOCIAL_AUTH_ENABLED', true),";
+
+                // Insert before the closing bracket
+                $authContent = str_replace(PHP_EOL . '];', $socialAuthConfig . PHP_EOL . PHP_EOL . '];', $authContent);
+                file_put_contents($authConfigPath, $authContent);
+                $this->info('Added social_auth_enabled configuration to auth.php');
+            }
+        } else {
+            // If auth.php doesn't exist, the API stack installation will handle it
+            $this->warn('auth.php not found. It will be created by the API stack installation.');
         }
     }
 
@@ -590,6 +720,17 @@ class InstallCommand extends Command
             if (!isset($composerJson['require']['pragmarx/recovery'])) {
                 $this->info('Adding pragmarx/recovery to composer.json');
                 $composerJson['require']['pragmarx/recovery'] = '^0.2.1';
+            }
+
+            // Add OAuth packages to require if they don't exist
+            if (!isset($composerJson['require']['laravel/socialite'])) {
+                $this->info('Adding laravel/socialite to composer.json');
+                $composerJson['require']['laravel/socialite'] = '^5.23';
+            }
+
+            if (!isset($composerJson['require']['google/apiclient'])) {
+                $this->info('Adding google/apiclient to composer.json');
+                $composerJson['require']['google/apiclient'] = '^2.18';
             }
 
             // Add IDE helper commands to post-update-cmd if not already added
@@ -690,6 +831,8 @@ class InstallCommand extends Command
             '/^\d{4}_\d{2}_\d{2}_\d{6}_add_avatar_to_users_table\.php$/',
             '/^\d{4}_\d{2}_\d{2}_\d{6}_add_phone_to_users_table\.php$/',
             '/^\d{4}_\d{2}_\d{2}_\d{6}_add_email_change_fields_to_users_table\.php$/',
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_make_password_nullable_in_users_table\.php$/',
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_add_oauth_providers_to_users_table\.php$/',
         ];
 
         $migrationsPath = database_path('migrations');
@@ -762,6 +905,8 @@ class InstallCommand extends Command
             '/^\d{4}_\d{2}_\d{2}_\d{6}_add_avatar_to_users_table\.php$/',
             '/^\d{4}_\d{2}_\d{2}_\d{6}_add_phone_to_users_table\.php$/',
             '/^\d{4}_\d{2}_\d{2}_\d{6}_add_email_change_fields_to_users_table\.php$/',
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_make_password_nullable_in_users_table\.php$/',
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_add_oauth_providers_to_users_table\.php$/',
         ];
 
         $migrationsPath = database_path('migrations');

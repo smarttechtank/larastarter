@@ -9,6 +9,11 @@ A Laravel package that sets up a starter project with API stack, role-based auth
 - Frontend/Backend separation with proper API endpoints
 - Role-based user authentication
 - Configurable user registration control (enable/disable registration)
+- **OAuth social authentication (Google & GitHub)**
+  - Multiple provider support per account
+  - Account linking/unlinking capabilities
+  - Mobile app token authentication
+  - OAuth-only users (no password required)
 - Two-factor authentication via Google Authenticator
 - User avatar upload and management system
 - User phone number management with international format support
@@ -74,20 +79,22 @@ This will:
 
 1. Install the API starter kit with Sanctum authentication (previously required Laravel Breeze)
 2. Install Google 2FA packages (bacon/bacon-qr-code, pragmarx/google2fa-laravel, pragmarx/recovery)
-3. Configure CORS for API access
-4. Set up frontend URL environment variable
-5. Add authentication environment variables (EMAIL_CHANGE_ALERT_DELAY, VERIFICATION_EXPIRE_MINUTES, REGISTRATION_ENABLED)
-6. Create the necessary migrations for roles, Google Authenticator 2FA, avatar, phone, and email change fields
-7. Install the Role model
-8. Update the User model to support roles, Google Authenticator 2FA, avatar, phone, and email change verification
-9. Install repositories for users and roles
-10. Install policies for authorization
-11. Install middleware for API protection, email verification, and registration control
-12. Install database seeders
-13. Install request validation classes
-14. Install API controllers and routes
-15. Install notification classes for email verification, password reset, and email change alerts
-16. Configure IDE Helper
+3. Install OAuth packages (laravel/socialite, google/apiclient)
+4. Configure CORS for API access
+5. Set up frontend URL environment variable
+6. Add authentication environment variables (EMAIL_CHANGE_ALERT_DELAY, VERIFICATION_EXPIRE_MINUTES, REGISTRATION_ENABLED, SOCIAL_AUTH_ENABLED, OAuth credentials)
+7. Create the necessary migrations for roles, Google Authenticator 2FA, avatar, phone, email change, and OAuth providers
+8. Install the Role model
+9. Update the User model to support roles, Google Authenticator 2FA, avatar, phone, email change verification, and OAuth providers
+10. Install repositories for users and roles
+11. Install policies for authorization
+12. Install middleware for API protection, email verification, and registration control
+13. Install database seeders
+14. Install request validation classes
+15. Install API controllers (including OAuth social authentication)
+16. Install notification classes for email verification, password reset, and email change alerts
+17. Update configuration files (services.php for OAuth, auth.php for social auth control)
+18. Configure IDE Helper
 
 The installation process uses Laravel Prompts to provide an interactive user experience. When files already exist, you'll be presented with a selection prompt asking if you want to replace the file, with "Yes" as the default option.
 
@@ -250,6 +257,49 @@ LaraStarter provides comprehensive search and filtering capabilities for user ma
 - **Self-deletion Protection** - Prevents users from accidentally deleting themselves
 - **Detailed Response** - Returns count of successful/failed deletions and error details
 
+## OAuth Social Authentication
+
+LaraStarter includes comprehensive OAuth social authentication support for Google and GitHub:
+
+- **Multiple Provider Support**: Users can link both Google and GitHub to the same account
+- **Registration Control**: Respects `registration_enabled` config setting
+- **Account Linking**: Existing users can link OAuth providers to their accounts
+- **2FA Integration**: Works seamlessly with existing 2FA system
+- **API & Web Support**: Supports both token-based API and session-based web authentication
+- **Mobile App Support**: Token-based authentication for native mobile apps (Flutter, React Native)
+- **OAuth-only Users**: Users can authenticate without setting a password
+
+### OAuth Routes
+
+**Authentication Routes (Guest Users):**
+
+- `GET /auth/{provider}/redirect` - Redirect to OAuth provider (google|github)
+- `GET /auth/{provider}/callback` - Handle OAuth callback
+
+**Account Linking Routes (Authenticated Users):**
+
+- `GET /auth/{provider}/link` - Link OAuth provider to existing account
+- `DELETE /auth/{provider}/unlink` - Unlink OAuth provider from account
+
+**Mobile OAuth Route (Native Apps):**
+
+- `POST /auth/{provider}/token` - Authenticate with OAuth token from mobile SDK
+
+### OAuth Configuration
+
+Add the following to your `.env` file:
+
+```env
+# OAuth Settings
+SOCIAL_AUTH_ENABLED=true
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+```
+
+For detailed OAuth setup instructions, mobile app integration guides, and security best practices, see [OAUTH_SETUP.md](OAUTH_SETUP.md).
+
 ## Two-Factor Authentication
 
 LaraStarter includes a complete Google Authenticator-based two-factor authentication system that works with both API and web routes:
@@ -329,9 +379,14 @@ The following environment variables are automatically added during installation:
 
 ```env
 # Authentication Settings
-EMAIL_CHANGE_ALERT_DELAY=60           # Delay in seconds before sending alert to old email
-VERIFICATION_EXPIRE_MINUTES=60        # Minutes before email verification link expires
-REGISTRATION_ENABLED=true             # Enable/disable public user registration
+EMAIL_CHANGE_ALERT_DELAY=60                        # Delay in seconds before sending alert to old email
+VERIFICATION_EXPIRE_MINUTES=60                     # Minutes before email verification link expires
+REGISTRATION_ENABLED=true                          # Enable/disable public user registration
+SOCIAL_AUTH_ENABLED=true                           # Enable/disable social OAuth authentication
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
 ```
 
 You can customize these values in your `.env` file to match your application's requirements.

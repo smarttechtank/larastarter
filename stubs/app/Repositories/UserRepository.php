@@ -66,7 +66,7 @@ class UserRepository extends BaseRepository
         $user = $this->model->create([
             'name' => $inputs['name'],
             'email' => $inputs['email'],
-            'password' => Hash::make(Str::random(8)),
+            'password' => Str::random(8),
             'phone' => $inputs['phone'],
             'role_id' => $inputs['role_id'],
         ]);

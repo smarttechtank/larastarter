@@ -22,9 +22,32 @@ class UpdateUserPasswordRequest extends FormRequest
      */
     public function rules(): array
     {
+        $user = $this->user();
+
+        // OAuth users (password = null) don't need old password when setting their first password
+        // Regular users must provide old password to change it
+        $oldPasswordRule = $user && $user->password === null
+            ? ['nullable']
+            : ['required', 'current_password'];
+
         return [
-            'old_password' => ['required', 'current_password'],
+            'old_password' => $oldPasswordRule,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'old_password.required' => 'Please provide your current password.',
+            'old_password.current_password' => 'The old password is incorrect.',
+            'password.required' => 'Please provide a new password.',
+            'password.confirmed' => 'Password confirmation does not match.',
         ];
     }
 }

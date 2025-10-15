@@ -154,4 +154,18 @@ return [
 
     'registration_enabled' => env('REGISTRATION_ENABLED', true),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Social Authentication Status
+    |--------------------------------------------------------------------------
+    |
+    | This option controls whether social authentication (OAuth) is enabled
+    | in your application. When set to false, social auth endpoints will
+    | return a 403 Forbidden response. This is useful for applications where
+    | you want to disable OAuth login methods.
+    |
+    */
+
+    'social_auth_enabled' => env('SOCIAL_AUTH_ENABLED', true),
+
 ];
