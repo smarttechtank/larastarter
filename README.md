@@ -125,6 +125,17 @@ LaraStarter sets up a complete API authentication system using Laravel Sanctum:
 - Token-based authentication for mobile/SPA applications
 - CSRF protection for browser requests
 - Proper CORS configuration for cross-origin requests
+- **Extended Sanctum configuration** - Automatically includes custom IP addresses and ports in stateful domains, allowing you to serve your API on any network-accessible IP address (not just localhost)
+
+### Serving with Custom IP Address
+
+For local development on a custom IP address (useful for testing from mobile devices or other computers on your network), you can serve your Laravel application with:
+
+```bash
+php artisan serve --host=192.168.100.100 --port=8000
+```
+
+The Sanctum configuration will automatically detect and trust this host/port combination for stateful authentication. Make sure to update your `FRONTEND_URL` environment variable to match your frontend application's URL if it's also running on a custom IP or port.
 
 ### API Routes
 
