@@ -77,8 +77,10 @@ class Role extends Model
                 }
             )
             ->when(!empty($filters['search']), function ($query) use ($filters) {
-                $query->where('roles.name', 'LIKE', "%{$filters['search']}%")
-                    ->orWhere('roles.description', 'LIKE', "%{$filters['search']}%");
+                $query->where(function ($q) use ($filters) {
+                    $q->where('roles.name', 'LIKE', "%{$filters['search']}%")
+                        ->orWhere('roles.description', 'LIKE', "%{$filters['search']}%");
+                });
             });
     }
 
