@@ -26,8 +26,9 @@ class UpdateUserRequest extends FormRequest
         $rules['role_id'] = 'nullable|exists:roles,id';
 
         // Validate email uniqueness for updates (except for the current user)
+        // Email is optional since profile updates don't include email (requires separate verification)
         $userId = $this->route('user') ?? auth()->id();
-        $rules['email'] = 'required|string|max:255|email|unique:users,email,' . $userId;
+        $rules['email'] = 'sometimes|nullable|string|max:255|email|unique:users,email,' . $userId;
 
         unset($rules['password']);
         return $rules;
