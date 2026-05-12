@@ -17,6 +17,7 @@ A Laravel package that sets up a starter project with API stack, role-based auth
 - Two-factor authentication via Google Authenticator
 - User avatar upload and management system
 - User phone number management with international format support
+- User gender field with support for male, female, and other
 - Secure email change with verification flow
 - Comprehensive user search, filtering, and sorting capabilities
 - Bulk user management operations with proper authorization
@@ -83,9 +84,9 @@ This will:
 4. Configure CORS for API access
 5. Set up frontend URL environment variable
 6. Add authentication environment variables (EMAIL_CHANGE_ALERT_DELAY, VERIFICATION_EXPIRE_MINUTES, REGISTRATION_ENABLED, SOCIAL_AUTH_ENABLED, OAuth credentials)
-7. Create the necessary migrations for roles, Google Authenticator 2FA, avatar, phone, email change, and OAuth providers
+7. Create the necessary migrations for roles, Google Authenticator 2FA, avatar, phone, email change, OAuth providers, and gender
 8. Install the Role model
-9. Update the User model to support roles, Google Authenticator 2FA, avatar, phone, email change verification, and OAuth providers
+9. Update the User model to support roles, Google Authenticator 2FA, avatar, phone, email change verification, OAuth providers, and gender
 10. Install repositories for users and roles
 11. Install policies for authorization
 12. Install middleware for API protection, email verification, and registration control
@@ -155,13 +156,13 @@ The Sanctum configuration will automatically detect and trust this host/port com
 - `GET /api/users` - List users with filtering, searching, and pagination
 - `POST /api/users` - Create a new user (sends password reset email)
 - `GET /api/users/{id}` - View a specific user
-- `PUT/PATCH /api/users/{id}` - Update user details (name, email, phone, role)
+- `PUT/PATCH /api/users/{id}` - Update user details (name, email, phone, role, gender)
 - `DELETE /api/users/{id}` - Delete a specific user
 - `POST /api/users/bulk-destroy` - Delete multiple users at once
 
 **Profile Management** (for authenticated users):
 
-- `PUT/PATCH /api/users/update-profile` - Update user profile (name, phone) - _Note: Email changes require separate verification_
+- `PUT/PATCH /api/users/update-profile` - Update user profile (name, phone, gender) - _Note: Email changes require separate verification_
 - `PUT/PATCH /api/users/update-password` - Update user password
 
 ### Avatar Management Routes
@@ -192,6 +193,13 @@ LaraStarter provides comprehensive user profile management capabilities:
 - **Search functionality** - Users can be searched by phone number
 - **Validation patterns** - Accepts formats like `+1-234-567-8900`, `(555) 123-4567`, `+44 20 1234 5678`
 - **Regex validation** - Uses pattern `/^[\+]?[0-9\-\(\)\s]+$/` for validation
+
+### Gender Support
+
+- **Optional field** - Gender is not required on registration or profile updates
+- **Accepted values** - `male`, `female`, `other`
+- **Filter support** - Users can be filtered by one or more gender values via the `genders` query parameter
+- **Sort support** - Users can be sorted by gender (ascending/descending)
 
 ### Email Change with Verification
 
@@ -252,7 +260,8 @@ LaraStarter provides comprehensive search and filtering capabilities for user ma
 
 - **Text Search** - Search users by name, email, or phone number
 - **Role Filtering** - Filter users by specific roles (supports multiple role IDs)
-- **Sorting Options** - Sort by name, email, role, or creation date (ascending/descending)
+- **Gender Filtering** - Filter users by gender (supports multiple values: `male`, `female`, `other`)
+- **Sorting Options** - Sort by name, email, role, gender, or creation date (ascending/descending)
 - **Pagination** - Configurable per-page results with query string preservation
 - **Combined Filters** - Use multiple filters simultaneously for precise results
 
@@ -261,6 +270,7 @@ LaraStarter provides comprehensive search and filtering capabilities for user ma
 - `name.asc` / `name.desc` - Sort by user name
 - `email.asc` / `email.desc` - Sort by email address
 - `role.asc` / `role.desc` - Sort by role name
+- `gender.asc` / `gender.desc` - Sort by gender
 - `created_at.asc` / `created_at.desc` - Sort by registration date
 
 ### Bulk Operations

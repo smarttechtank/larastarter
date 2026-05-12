@@ -22,7 +22,8 @@ class UserRepository extends BaseRepository
         'email',
         'phone',
         'email_verified_at',
-        'password'
+        'password',
+        'gender',
     ];
 
     public function getFieldsSearchable(): array
@@ -58,6 +59,7 @@ class UserRepository extends BaseRepository
      *                     - email: string User's email
      *                     - phone: string User's phone number
      *                     - role_id: int Role ID to assign
+     *                     - gender: string User's gender (male, female, other)
      * @return User The newly created user model
      */
     public function createNewUser(array $inputs): User
@@ -68,6 +70,7 @@ class UserRepository extends BaseRepository
             'email' => $inputs['email'],
             'password' => Str::random(8),
             'phone' => $inputs['phone'],
+            'gender' => $inputs['gender'] ?? null,
             'role_id' => $inputs['role_id'],
         ]);
 

@@ -43,6 +43,7 @@ class LarastarterServiceProvider extends ServiceProvider
             __DIR__ . '/../database/migrations/add_email_change_fields_to_users_table.php.stub' => database_path('migrations/0001_01_01_000008_add_email_change_fields_to_users_table.php'),
             __DIR__ . '/../database/migrations/make_password_nullable_in_users_table.php.stub' => database_path('migrations/0001_01_01_000009_make_password_nullable_in_users_table.php'),
             __DIR__ . '/../database/migrations/add_oauth_providers_to_users_table.php.stub' => database_path('migrations/0001_01_01_000010_add_oauth_providers_to_users_table.php'),
+            __DIR__ . '/../database/migrations/add_gender_to_users_table.php.stub' => database_path('migrations/0001_01_01_000011_add_gender_to_users_table.php'),
         ], 'larastarter-migrations');
 
         // Publish factories

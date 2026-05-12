@@ -41,17 +41,14 @@ class UserAPIController extends AppBaseController
             'sort',
             'search',
             'roles',
+            'genders',
         ]);
 
-        if ($filters) {
-            $users = $this->userRepository
-                ->getFilter($filters)
-                ->with('role')
-                ->paginate($filters['per_page'] ?? 10)
-                ->withQueryString();
-        } else {
-            $users = $this->userRepository->getAll();
-        }
+        $users = $this->userRepository
+            ->getFilter($filters)
+            ->with('role')
+            ->paginate($filters['per_page'] ?? 10)
+            ->withQueryString();
 
         return $this->sendResponse($users, 'Users retrieved successfully');
     }
@@ -110,7 +107,7 @@ class UserAPIController extends AppBaseController
         // Prepare update data
         // Note: Admin updates can include email (bypasses verification for admin convenience)
         // Consider removing 'email' for stricter security in production environments
-        $data = $request->only(['name', 'email', 'phone', 'role_id']);
+        $data = $request->only(['name', 'email', 'phone', 'role_id', 'gender']);
 
         // Update user
         $this->userRepository->update($data, $user->id);
@@ -135,7 +132,7 @@ class UserAPIController extends AppBaseController
         $this->authorize('update', $user);
 
         // Prepare update data (email changes now require separate verification)
-        $data = $request->only(['name', 'phone']);
+        $data = $request->only(['name', 'phone', 'gender']);
 
         // Update user
         $this->userRepository->update($data, $user->id);

@@ -34,15 +34,11 @@ class RoleAPIController extends AppBaseController
             'search',
         ]);
 
-        if ($filters) {
-            $roles = $this->roleRepository
-                ->getFilter($filters)
-                ->withCount('users')
-                ->paginate($filters['per_page'] ?? 10)
-                ->withQueryString();
-        } else {
-            $roles = $this->roleRepository->getAll();
-        }
+        $roles = $this->roleRepository
+            ->getFilter($filters)
+            ->withCount('users')
+            ->paginate($filters['per_page'] ?? 10)
+            ->withQueryString();
 
         return $this->sendResponse($roles, 'Roles retrieved successfully');
     }

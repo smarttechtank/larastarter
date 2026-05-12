@@ -31,14 +31,19 @@ class RegisteredUserController extends AppBaseController
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'gender' => ['nullable', 'in:male,female,other'],
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->string('password')),
+            'gender' => $request->gender,
             // default role is user role
-            'role_id' => Role::where('name', 'user')->first()->id,
+            'role_id' => Role::firstOrCreate(
+                ['name' => 'user'],
+                ['description' => 'Regular user with limited access']
+            )->id,
         ]);
 
         event(new Registered($user));

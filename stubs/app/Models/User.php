@@ -30,6 +30,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'phone',
+        'gender',
         'password',
         'role_id',
         'two_factor_enabled',
@@ -57,6 +58,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'email.desc',
         'role.asc',
         'role.desc',
+        'gender.asc',
+        'gender.desc',
         'created_at.asc',
         'created_at.desc'
     ];
@@ -113,6 +116,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'name' => 'required|string|max:255',
         'email' => 'required|string|max:255|email|unique:users,email',
         'phone' => 'nullable|string|max:20|regex:/^[\+]?[0-9\-\(\)\s]+$/',
+        'gender' => 'nullable|in:male,female,other',
         'password' => 'nullable|string|min:8|max:255',
         'role_id' => 'required|exists:roles,id',
     ];
@@ -350,6 +354,10 @@ class User extends Authenticatable implements MustVerifyEmail
             ->when(
                 isset($filters['roles']) && $filters['roles'],
                 fn ($query) => $query->whereIn('role_id', array_map('intval', explode(',', $filters['roles'])))
+            )
+            ->when(
+                isset($filters['genders']) && $filters['genders'],
+                fn ($query) => $query->whereIn('gender', explode(',', $filters['genders']))
             );
     }
 

@@ -836,6 +836,7 @@ class InstallCommand extends Command
             '/^\d{4}_\d{2}_\d{2}_\d{6}_add_email_change_fields_to_users_table\.php$/',
             '/^\d{4}_\d{2}_\d{2}_\d{6}_make_password_nullable_in_users_table\.php$/',
             '/^\d{4}_\d{2}_\d{2}_\d{6}_add_oauth_providers_to_users_table\.php$/',
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_add_gender_to_users_table\.php$/',
         ];
 
         $migrationsPath = database_path('migrations');
@@ -910,6 +911,7 @@ class InstallCommand extends Command
             '/^\d{4}_\d{2}_\d{2}_\d{6}_add_email_change_fields_to_users_table\.php$/',
             '/^\d{4}_\d{2}_\d{2}_\d{6}_make_password_nullable_in_users_table\.php$/',
             '/^\d{4}_\d{2}_\d{2}_\d{6}_add_oauth_providers_to_users_table\.php$/',
+            '/^\d{4}_\d{2}_\d{2}_\d{6}_add_gender_to_users_table\.php$/',
         ];
 
         $migrationsPath = database_path('migrations');
