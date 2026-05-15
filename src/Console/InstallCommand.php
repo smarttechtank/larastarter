@@ -717,7 +717,7 @@ class InstallCommand extends Command
 
             if (!isset($composerJson['require']['pragmarx/google2fa-laravel'])) {
                 $this->info('Adding pragmarx/google2fa-laravel to composer.json');
-                $composerJson['require']['pragmarx/google2fa-laravel'] = '^2.3';
+                $composerJson['require']['pragmarx/google2fa-laravel'] = '^3.0';
             }
 
             if (!isset($composerJson['require']['pragmarx/recovery'])) {
