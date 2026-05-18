@@ -115,13 +115,28 @@ trait InstallApiStackTrait
 
             if (!str_contains($env, 'FRONTEND_URL=')) {
                 $env = preg_replace(
-                    '/APP_URL=(.*)/',
-                    'APP_URL=$1' . PHP_EOL . 'FRONTEND_URL=http://localhost:3000',
+                    '/APP_URL=.*/',
+                    'APP_URL=http://localhost:8000' . PHP_EOL . 'FRONTEND_URL=http://localhost:3000',
                     $env
                 );
 
                 file_put_contents(base_path('.env'), $env);
                 $this->info('Added FRONTEND_URL to .env file');
+            }
+        }
+
+        if (file_exists(base_path('.env.example'))) {
+            $envExample = file_get_contents(base_path('.env.example'));
+
+            if (!str_contains($envExample, 'FRONTEND_URL=')) {
+                $envExample = preg_replace(
+                    '/APP_URL=.*/',
+                    'APP_URL=http://localhost:8000' . PHP_EOL . 'FRONTEND_URL=http://localhost:3000',
+                    $envExample
+                );
+
+                file_put_contents(base_path('.env.example'), $envExample);
+                $this->info('Added FRONTEND_URL to .env.example file');
             }
         }
 
