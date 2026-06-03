@@ -278,9 +278,10 @@ class InstallCommand extends Command
         $this->info('Installing middleware...');
 
         // Copy SkipCsrfToken middleware
-        $this->copyFile(
+        $this->copyAdaptedStub(
             __DIR__ . '/../../stubs/app/Http/Middleware/SkipCsrfToken.php',
-            app_path('Http/Middleware/SkipCsrfToken.php')
+            app_path('Http/Middleware/SkipCsrfToken.php'),
+            'web'
         );
 
         // Update EnsureEmailIsVerified middleware
@@ -524,9 +525,10 @@ class InstallCommand extends Command
         $this->info('Updating auth-related files...');
 
         // Update bootstrap/app.php
-        $this->copyFile(
+        $this->copyAdaptedStub(
             __DIR__ . '/../../stubs/bootstrap/app.php',
             base_path('bootstrap/app.php'),
+            'web',
             $this->option('force')
         );
     }
@@ -778,6 +780,51 @@ class InstallCommand extends Command
         $process->run(function ($type, $line) {
             $this->output->write($line);
         });
+    }
+
+    protected function usesPreventRequestForgery(): bool
+    {
+        return class_exists(\Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class);
+    }
+
+    protected function adaptCsrfStub(string $content, string $context): string
+    {
+        if ($this->usesPreventRequestForgery()) {
+            return $content;
+        }
+
+        return match ($context) {
+            'web' => str_replace('PreventRequestForgery', 'VerifyCsrfToken', $content),
+            'sanctum' => str_replace('PreventRequestForgery', 'ValidateCsrfToken', $content),
+            default => $content,
+        };
+    }
+
+    protected function copyAdaptedStub(string $from, string $to, string $context, bool $force = false): void
+    {
+        if (file_exists($to) && !$force && !$this->option('force')) {
+            $this->input->setOption('replace', confirm(
+                label: "The file {$to} already exists. Do you want to replace it?",
+                default: true
+            ));
+
+            if (!$this->option('replace')) {
+                return;
+            }
+        }
+
+        if (!file_exists($from)) {
+            $this->error("File {$from} does not exist!");
+
+            return;
+        }
+
+        (new Filesystem)->ensureDirectoryExists(dirname($to));
+
+        $content = file_get_contents($from);
+        file_put_contents($to, $this->adaptCsrfStub($content, $context));
+
+        $this->line("<info>Copied:</info> {$from} <info>to</info> {$to}");
     }
 
     protected function copyFile(string $from, string $to, bool $force = false)

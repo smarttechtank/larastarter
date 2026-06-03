@@ -4,10 +4,10 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Symfony\Component\HttpFoundation\Response;
 
-class SkipCsrfToken extends VerifyCsrfToken
+class SkipCsrfToken extends PreventRequestForgery
 {
     /**
      * The URIs that should be excluded from CSRF verification.

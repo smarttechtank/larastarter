@@ -21,9 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'registration.enabled' => \App\Http\Middleware\EnsureRegistrationIsEnabled::class,
         ]);
 
-        // Use web middleware group and replace VerifyCsrfToken with our custom middleware
+        // Use web middleware group and replace PreventRequestForgery with our custom middleware
         $middleware->web(replace: [
-            \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class => \App\Http\Middleware\SkipCsrfToken::class,
+            \Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class => \App\Http\Middleware\SkipCsrfToken::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

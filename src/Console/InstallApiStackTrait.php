@@ -97,9 +97,10 @@ trait InstallApiStackTrait
             $this->option('force')
         );
 
-        $this->copyFile(
+        $this->copyAdaptedStub(
             __DIR__ . '/../../stubs/api/config/sanctum.php',
             config_path('sanctum.php'),
+            'sanctum',
             $this->option('force')
         );
 

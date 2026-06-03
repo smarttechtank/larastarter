@@ -30,6 +30,11 @@ A Laravel package that sets up a starter project with API stack, role-based auth
 - IDE Helper setup with auto-generation
 - Interactive installation with modern UI prompts
 
+## Requirements
+
+- PHP 8.2+
+- Laravel 11, 12, or 13
+
 ## Installation
 
 ### From Packagist (Public)
@@ -89,7 +94,7 @@ This will:
 9. Update the User model to support roles, Google Authenticator 2FA, avatar, phone, email change verification, OAuth providers, and gender
 10. Install repositories for users and roles
 11. Install policies for authorization
-12. Install middleware for API protection, email verification, and registration control
+12. Install middleware for API protection, email verification, registration control, and CSRF/request-forgery handling
 13. Install database seeders
 14. Install request validation classes
 15. Install API controllers (including OAuth social authentication)
@@ -124,9 +129,24 @@ LaraStarter sets up a complete API authentication system using Laravel Sanctum:
 
 - Session-based authentication for browser clients
 - Token-based authentication for mobile/SPA applications
-- CSRF protection for browser requests
+- Request-forgery protection for browser requests (via a custom `SkipCsrfToken` middleware)
 - Proper CORS configuration for cross-origin requests
 - **Extended Sanctum configuration** - Automatically includes custom IP addresses and ports in stateful domains, allowing you to serve your API on any network-accessible IP address (not just localhost)
+
+### Request Forgery Protection (CSRF)
+
+LaraStarter installs a `SkipCsrfToken` middleware that replaces Laravel's default web middleware. It keeps standard protection for browser requests while allowing API-style calls that send an `X-Request-Token` header (used throughout LaraStarter's auth controllers).
+
+The installer adapts middleware class names to your Laravel version:
+
+| Laravel version | Middleware class used |
+| --- | --- |
+| 13.x | `PreventRequestForgery` |
+| 11.x / 12.x | `VerifyCsrfToken` (web) / `ValidateCsrfToken` (Sanctum config) |
+
+On Laravel 13, `VerifyCsrfToken` and `ValidateCsrfToken` are deprecated aliases; LaraStarter uses `PreventRequestForgery` directly so you avoid deprecation warnings.
+
+If you installed LaraStarter on Laravel 13 before this update, re-run `php artisan larastarter:install --force` or manually update `app/Http/Middleware/SkipCsrfToken.php`, `bootstrap/app.php`, and `config/sanctum.php` to reference `PreventRequestForgery`.
 
 ### Serving with Custom IP Address
 
