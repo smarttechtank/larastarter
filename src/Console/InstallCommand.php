@@ -354,6 +354,7 @@ class InstallCommand extends Command
             'LoginRequest.php',
             'TwoFactorVerifyRequest.php',
             'TwoFactorSetupRequest.php',
+            'TwoFactorDisableRequest.php',
         ];
 
         foreach ($authRequests as $request) {

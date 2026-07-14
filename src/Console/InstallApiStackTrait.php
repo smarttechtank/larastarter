@@ -187,6 +187,7 @@ trait InstallApiStackTrait
             'EmailVerificationTest.php',
             'PasswordResetTest.php',
             'RegistrationTest.php',
+            'TwoFactorAuthDisableTest.php',
         ];
 
         foreach ($testFiles as $testFile) {

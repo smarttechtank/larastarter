@@ -8,6 +8,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\Auth\TwoFactorVerifyRequest;
 use App\Http\Requests\Auth\TwoFactorSetupRequest;
+use App\Http\Requests\Auth\TwoFactorDisableRequest;
 
 class TwoFactorAuthController extends AppBaseController
 {
@@ -79,10 +80,24 @@ class TwoFactorAuthController extends AppBaseController
 
     /**
      * Disable two-factor authentication for the authenticated user.
+     *
+     * Requires the user to reauthenticate with their current password or a
+     * valid Google 2FA / recovery code, since this is a security-sensitive action.
      */
-    public function disable(): JsonResponse|Response
+    public function disable(TwoFactorDisableRequest $request): JsonResponse|Response
     {
         $user = Auth::user();
+
+        // Password reauthentication is already verified by TwoFactorDisableRequest.
+        // If a code was provided instead, verify it here.
+        if ($request->filled('code')) {
+            $codeVerified = $user->verifyGoogle2FACode($request->code)
+                || $user->verifyRecoveryCode($request->code);
+
+            if (!$codeVerified) {
+                return $this->sendError('Invalid Google 2FA code or recovery code.', 422);
+            }
+        }
 
         // Disable 2FA and reset secret and recovery codes
         $user->two_factor_enabled = false;
